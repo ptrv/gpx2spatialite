@@ -454,11 +454,14 @@ def extractpoints(filepath, cursor):
 
                     time = point.time
                     ele = point.elevation
-                    speed = point.speed
+
                     if lastpoint:
                         lon1 = lastpoint.longitude
                         lat1 = lastpoint.latitude
                         course = getcourse(lat1, lon1, lat, lon)
+                        speed = point.speed_between(lastpoint)
+                        if speed is None:
+                            speed = 0
                     else:
                         course = 0
                         speed = 0
