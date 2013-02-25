@@ -128,6 +128,7 @@ UNIQUE(city, country)
 );
 
 SELECT AddGeometryColumn('citydefs', 'geom', 4326, 'POLYGON', 'XY');
+SELECT CreateSpatialIndex('citydefs', 'geom');
 
 CREATE TABLE tracksegments (
 trkseg_uid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
