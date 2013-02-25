@@ -254,7 +254,8 @@ def getcourse(lat1, lon1, lat2, lon2):
     londiff = radians(lon2 - lon1)
     course_rad = atan2(
         sin(londiff) * cos(lat2rad),
-        cos(lat1rad) * sin(lat2rad) - sin(lat1rad) * cos(lat2rad) * cos(londiff))
+        (cos(lat1rad) * sin(lat2rad) -
+         sin(lat1rad) * cos(lat2rad) * cos(londiff)))
 
     return degrees(course_rad)
 
@@ -332,7 +333,7 @@ def enterpoints(cursor, user, trkpts, file_uid):
     """
     for line in trkpts:
         trkseg_id, trksegpt_id, ele, time, course, speed, loc, geom = line
-        if ele == None:
+        if ele is None:
             print "No elevation recorded for %s - assuming 0" % time
             ele = 0
         sql = "INSERT INTO trackpoints (trkseg_id, trksegpt_id, "
@@ -365,19 +366,21 @@ def enterlines(cursor, user, trklines, file_uid):
                length_m, time_sec, speed_kph, linestr]
     """
     for line in trklines:
-        trkseg_id, timestamp_start, timestamp_end, length_m, time_sec, speed_kph, linestr = line
+        (trkseg_id, timestamp_start, timestamp_end, length_m, time_sec,
+         speed_kph, linestr) = line
         sql = "INSERT INTO tracklines (trkseg_id, timestamp_start, "
         sql += "timestamp_end, length_m, time_sec, speed_kph, "
         sql += "file_uid, user_uid, geom) VALUES "
-        sql += "(%d, '%s', '%s', %f, %d, %f, %d, %d, GeomFromText('%s', 4326))" % (trkseg_id,
-                                                                                   timestamp_start,
-                                                                                   timestamp_end,
-                                                                                   length_m,
-                                                                                   time_sec,
-                                                                                   speed_kph,
-                                                                                   file_uid,
-                                                                                   user,
-                                                                                   linestr)
+        sql += "(%d, '%s', '%s', %f, %d, %f, %d, %d,"\
+            " GeomFromText('%s', 4326))" % (trkseg_id,
+                                            timestamp_start,
+                                            timestamp_end,
+                                            length_m,
+                                            time_sec,
+                                            speed_kph,
+                                            file_uid,
+                                            user,
+                                            linestr)
         cursor.execute(sql)
 
 
