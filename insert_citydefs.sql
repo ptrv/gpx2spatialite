@@ -233,4 +233,16 @@ WHERE (SELECT type FROM geometry_columns
 WHERE f_table_name = 'citydefs' AND f_geometry_column = 'geom'
 AND GeometryConstraints(NEW."geom", type, srid, 'XY') = 1) IS NULL;
 END;
+CREATE TRIGGER "gii_citydefs_geom" AFTER INSERT ON "citydefs"
+FOR EACH ROW BEGIN
+DELETE FROM "idx_citydefs_geom" WHERE pkid=NEW.ROWID;
+SELECT RTreeAlign('"idx_citydefs_geom"', NEW.ROWID, NEW."geom");END;
+CREATE TRIGGER "giu_citydefs_geom" AFTER UPDATE ON "citydefs"
+FOR EACH ROW BEGIN
+DELETE FROM "idx_citydefs_geom" WHERE pkid=NEW.ROWID;
+SELECT RTreeAlign('"idx_citydefs_geom"', NEW.ROWID, NEW."geom");END;
+CREATE TRIGGER "gid_citydefs_geom" AFTER DELETE ON "citydefs"
+FOR EACH ROW BEGIN
+DELETE FROM "idx_citydefs_geom" WHERE pkid = OLD.ROWID;
+END;
 COMMIT;
