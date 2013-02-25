@@ -3,8 +3,11 @@
 """
 Started Tue 12 Feb 2013 21:48:02 CET
 
-Using the osgeo ogr GPX driver, import a file record, trackpoints and
+Using Tomo Krajina's gpx module, import a file record, trackpoints and
 tracklines to a database (SQL for database below)
+
+TODO: work out why first point in segment gets a value for speed and
+course
 
 Copyright 2013 Daniel Belasco Rogers <http://planbperformance.net/dan>
                Peter Vasil <mail@petervasil.net>
@@ -154,6 +157,7 @@ import os.path
 import hashlib
 from datetime import datetime
 from optparse import OptionParser
+from math import radians, atan2, sin, cos, degrees
 # these might need installing
 from pyspatialite import dbapi2 as spatialite
 try:
@@ -183,7 +187,7 @@ def checkfile(filepath):
         print '*' * 48
         print "%s is not a file" % filepath
         print "please retry with a file path e.g."\
-            " ~/currentGPS/dan2012/1_originalfiles/2012-D-01.gpx"
+              " ~/currentGPS/dan2012/1_originalfiles/2012-D-01.gpx"
         print '*' * 48
         sys.exit(2)
     return
@@ -201,14 +205,15 @@ def parseargs():
                          metavar="FILE",
                          default=DEFAULTDB,
                          help="Define path to alternate database")
+
     (options, args) = optparser.parse_args()
     if len(args) != 2:
         message = """
 Please define input GPX file and user number
 1=Daniel 2=Sophia
 e.g. python gpx2spatialite ~/path/to/gpxfile.gpx 1"""
-        # optparser.error("\nplease define input GPX file and user")
         optparser.error("\n" + message)
+
     filepath, user = args
     checkfile(filepath)
     dbpath = os.path.expanduser(options.dbasepath)
@@ -227,6 +232,30 @@ def getmd5(filepath):
         for chunk in iter(lambda: f.read(128 * md5.block_size), b''):
             md5.update(chunk)
     return md5.hexdigest()
+
+
+def getcourse(lat1, lon1, lat2, lon2):
+    """
+    initial course [degrees] to reach (lat2, lon2) from (lat1, lon1)
+    on a great circle
+
+    range of returned values:
+    -180 < course <= 180
+    (-90 = west, 0 = north, 90 = east, 180 = south)
+    """
+    if lat1 + 1e-10 > 90.0:
+        return 180.0  # starting from north pole -> the only direction is south
+    elif lat1 - 1e-10 < -90.0:
+        return 0.0   # starting from south pole -> the only direction is north
+
+    lat1rad = radians(lat1)
+    lat2rad = radians(lat2)
+    londiff = radians(lon2 - lon1)
+    course_rad = atan2(
+        sin(londiff) * cos(lat2rad),
+        cos(lat1rad) * sin(lat2rad) - sin(lat1rad) * cos(lat2rad) * cos(londiff))
+
+    return degrees(course_rad)
 
 
 def enterfile(filepath, cursor, user, firsttimestamp, lasttimestamp):
@@ -290,58 +319,64 @@ def getlasttrkseg(cursor):
     return lasttrkseg
 
 
-def timetodatetime(timestring):
-    """
-    """
-    outputdatetime = datetime.strptime(timestring, '%Y/%m/%d %H:%M:%S+00')
-    return outputdatetime
-
-
 def enterpoints(cursor, user, trkpts, file_uid):
     """
     Enters points in the spatially enabled 'trackpoints' table
+
     trackpoint columns: trackpoint_uid, trkseg_id, trksegpt_id, ele,
     utctimestamp, name, cmt, desc, course, speed, file_uid, user_uid,
     geom
 
-    trkpts = trkseg_id, trksegpt_id, ele, time, lat, lon
+    trkpts = trkseg_id, trksegpt_id, ele, time, course, speed, loc, geom
     """
-
-    # iterate through lines, forming an sql and updating as we
-    # go. Execute many wasn't possible because of forming strings for
-    # geometry instead of triggering function
-
     for line in trkpts:
-        trkseg_id, trksegpt_id, ele, time, loc, geom = line
+        trkseg_id, trksegpt_id, ele, time, course, speed, loc, geom = line
+        if ele == None:
+            print "No elevation recorded for %s - assuming 0" % time
+            ele = 0
         sql = "INSERT INTO trackpoints (trkseg_id, trksegpt_id, "
-        sql += "ele, utctimestamp, file_uid, user_uid, citydef_uid, geom) "
-        sql += "VALUES (%d, %d, %f, '%s', %d, %d, %d,"\
-            "GeomFromText('%s', 4326))" % (trkseg_id,
-                                           trksegpt_id,
-                                           ele,
-                                           time,
-                                           file_uid,
-                                           user,
-                                           loc,
-                                           geom)
-        cursor.execute(sql)
+        sql += "ele, utctimestamp, course, speed, "
+        sql += "file_uid, user_uid, citydef_uid, geom) "
+        sql += "VALUES (%d, %d, %f, '%s', %f, %f, %d, %d, %d, "\
+               "GeomFromText('%s', 4326))" % (trkseg_id,
+                                              trksegpt_id,
+                                              ele,
+                                              time,
+                                              course,
+                                              speed,
+                                              file_uid,
+                                              user,
+                                              loc,
+                                              geom)
+        try:
+            cursor.execute(sql)
+        except spatialite.IntegrityError as e:
+            print "Not importing duplicate point from %s: %s" % (time, e)
 
 
 def enterlines(cursor, user, trklines, file_uid):
     """
-    trkline = [trkseg_id, timestamp_start, timestamp_end, linestr]
+    trackline columns: trkline_uid, trksegid_fm_trkpts, name, cmt,
+    timestamp_start, timestamp_end, length_m, time_sec, speed_kph,
+    points, file_uid, user_uid, geom
+
+    trkline = [lastseg, timestamp_start, timestamp_end,
+               length_m, time_sec, speed_kph, linestr]
     """
     for line in trklines:
-        trkseg_id, timestamp_start, timestamp_end, linestr = line
+        trkseg_id, timestamp_start, timestamp_end, length_m, time_sec, speed_kph, linestr = line
         sql = "INSERT INTO tracklines (trkseg_id, timestamp_start, "
-        sql += "timestamp_end, file_uid, user_uid, geom) VALUES "
-        sql += "(%d, '%s', '%s', %d, %d, "\
-            "GeomFromText('%s', 4326))" % (trkseg_id,
-                                           timestamp_start,
-                                           timestamp_end,
-                                           file_uid,
-                                           user,
-                                           linestr)
+        sql += "timestamp_end, length_m, time_sec, speed_kph, "
+        sql += "file_uid, user_uid, geom) VALUES "
+        sql += "(%d, '%s', '%s', %f, %d, %f, %d, %d, GeomFromText('%s', 4326))" % (trkseg_id,
+                                                                                   timestamp_start,
+                                                                                   timestamp_end,
+                                                                                   length_m,
+                                                                                   time_sec,
+                                                                                   speed_kph,
+                                                                                   file_uid,
+                                                                                   user,
+                                                                                   linestr)
         cursor.execute(sql)
 
 
@@ -359,6 +394,8 @@ def insert_segment(cursor, seg_uuid):
 
 def get_location(cursor, lon, lat):
     """
+    Query the database citydefs table to see if the point is within
+    one. Return 1 (Unknown) if not
     """
     sql = "SELECT citydef_uid FROM citydefs WHERE within"
     sql += "(ST_GeomFromText('Point(%f %f)'), geom)" % (lon, lat)
@@ -376,7 +413,7 @@ def extractpoints(filepath, cursor):
     """
     parse the gpx file using gpxpy and return a list of lines
 
-    line = trkseg_id, trksegpt_id, ele, time, loc, geom
+    line = trkseg_id, trksegpt_id, ele, time, course, speed, loc, geom
 
     trackpoint columns: trackpoint_uid, trkseg_id, trksegpt_id, ele,
     utctimestamp, cmt, course, speed, file_uid, user_uid, citydef_uid, geom
@@ -392,6 +429,8 @@ def extractpoints(filepath, cursor):
 
     gpx = gpxpy.parse(open(filepath))
 
+    firsttimestamp, lasttimestamp = gpx.get_time_bounds()
+
     for track in gpx.tracks:
         for segment in track.segments:
             if segment.get_points_no() > 1:
@@ -400,35 +439,49 @@ def extractpoints(filepath, cursor):
                 lastseg = getlasttrkseg(cursor)
                 trksegpt_id = 0
                 pts_strs = []
+                lastpoint = None
                 for point in segment.points:
-                    geom_str = "Point(%f %f)" % (point.longitude,
-                                                 point.latitude)
+                    lat = point.latitude
+                    lon = point.longitude
+                    geom_str = "Point(%f %f)" % (lon, lat)
 
-                    pts_str = "%f %f" % (point.longitude, point.latitude)
+                    pts_str = "%f %f" % (lon, lat)
                     pts_strs.append(pts_str)
 
                     time = point.time
                     ele = point.elevation
+                    speed = point.speed
+                    if lastpoint:
+                        lon1 = lastpoint.longitude
+                        lat1 = lastpoint.latitude
+                        course = getcourse(lat1, lon1, lat, lon)
+                    else:
+                        course = 0
+                        speed = 0
 
-                    loc = get_location(cursor, point.longitude, point.latitude)
+                    loc = get_location(cursor, lon, lat)
 
-                    ptline = [lastseg, trksegpt_id, ele, time, loc, geom_str]
+                    ptline = [lastseg, trksegpt_id, ele, time,
+                              course, speed, loc, geom_str]
+
                     trkpts.append(ptline)
                     trksegpt_id += 1
+                    lastpoint = point
 
-                pt_start = segment.points[0]
-                pt_end = segment.points[segment.get_points_no() - 1]
-                timestamp_start = pt_start.time
-                timestamp_end = pt_end.time
+                timestamp_start, timestamp_end = segment.get_time_bounds()
+                length_m = segment.length_2d()
+                time_sec = segment.get_duration()
+                speed_kph = (length_m / time_sec) * 3.6
                 linestr = "LINESTRING("
                 linestr += ",".join(pts_strs)
                 linestr += ")"
-                trkline = [lastseg, timestamp_start, timestamp_end, linestr]
+                trkline = [lastseg, timestamp_start, timestamp_end,
+                           length_m, time_sec, speed_kph, linestr]
                 trklines.append(trkline)
             else:
                 print "skipping segment with < 2 points"
 
-    return trkpts, trklines
+    return trkpts, trklines, firsttimestamp, lasttimestamp
 
 
 def main():
@@ -439,44 +492,31 @@ def main():
     # for timing (rough)
     starttime = datetime.now()
 
-    # get file path
     filepath, user, dbpath = parseargs()
     user = int(user)
 
-    # connect to the database and make a cursor
     conn = spatialite.connect(dbpath)
     cursor = conn.cursor()
 
-    trkpts, trklines = extractpoints(filepath, cursor)
-
+    print "\nParsing points in %s" % filepath
+    trkpts, trklines, firsttimestamp, lasttimestamp = extractpoints(filepath,
+                                                                    cursor)
+    print "File first timestamp: %s, last timestamp: %s" % (firsttimestamp,
+                                                            lasttimestamp)
     endtime = datetime.now()
     print "\nParsing %d points from gpx file took %s " % (len(trkpts),
                                                           endtime - starttime)
-
-    # enter the file in the file table
     print "Entering file into database"
-    firsttimestamp = trkpts[0][3]
-    lasttimestamp = trkpts[len(trkpts) - 1][3]
-    print "File first timestamp: %s, last timestamp: %s" % (firsttimestamp,
-                                                            lasttimestamp)
     enterfile(filepath, cursor, user, firsttimestamp, lasttimestamp)
 
-    # get just entered file id from file just entered
     file_uid = getcurrentfileid(cursor)
 
-    # enter the trackpoints from the gpx file into the trackpoint
-    # table (get lasttrkseg and file_uid from this function to pass on
-    # to the enterlines function)
     print "Entering points into database"
     enterpoints(cursor, user, trkpts, file_uid)
 
-    # enter the lines into the database - either query the points in
-    # the database just entered, or cycle through the list of tupes
-    # (lines)
     print "Entering lines into database"
     enterlines(cursor, user, trklines, file_uid)
 
-    # commit changes to database and close connection
     conn.commit()
     conn.close()
 
