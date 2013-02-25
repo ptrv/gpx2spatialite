@@ -207,17 +207,35 @@ def parseargs():
                          default=DEFAULTDB,
                          help="Define path to alternate database")
 
+    optparser.add_option("-i",
+                         "--userid",
+                         dest="userid",
+                         metavar="USER_ID",
+                         default=1,
+                         help="Set userid")
+
+    optparser.add_option("-n",
+                         "--username",
+                         dest="username",
+                         metavar="USER_NAME",
+                         help="Set username")
+
     (options, args) = optparser.parse_args()
-    if len(args) != 2:
+    if len(args) != 1:
         message = """
 Please define input GPX file and user number
 1=Daniel 2=Sophia
 e.g. python gpx2spatialite ~/path/to/gpxfile.gpx 1"""
         optparser.error("\n" + message)
 
-    filepath, user = args
+    filepath = args[0]
     checkfile(filepath)
     dbpath = os.path.expanduser(options.dbasepath)
+    if options.username is not None:
+        user = options.username
+    else:
+        user = options.userid
+
     return filepath, user, dbpath
 
 
@@ -494,6 +512,31 @@ def extractpoints(filepath, cursor):
     return trkpts, trklines, firsttimestamp, lasttimestamp
 
 
+def get_user_id(cursor, username):
+    """
+    Gets the user id for a given username string.
+    """
+    sql = "SELECT user_uid FROM users WHERE username = '%s'" % (username)
+    cursor.execute(sql)
+
+    try:
+        userid = cursor.fetchone()[0]
+    except TypeError:
+        userid = -1
+    return userid
+
+
+def insert_user(cursor, username):
+    """
+    Insert a user into the database.
+    """
+    sql = "INSERT INTO users ('username') VALUES"
+    sql += "('%s')" % (username)
+    cursor.execute(sql)
+
+    return get_user_id(cursor, username)
+
+
 def main():
     """
     you know what 'main' does - run everything in the right order and
@@ -503,10 +546,17 @@ def main():
     starttime = datetime.now()
 
     filepath, user, dbpath = parseargs()
-    user = int(user)
 
     conn = spatialite.connect(dbpath)
     cursor = conn.cursor()
+
+    if type(user) is int:
+        user = user
+    elif type(user) is str:
+        userid = get_user_id(cursor, user)
+        if userid == -1:
+            userid = insert_user(cursor, user)
+        user = int(userid)
 
     print "\nParsing points in %s" % filepath
     trkpts, trklines, firsttimestamp, lasttimestamp = extractpoints(filepath,
