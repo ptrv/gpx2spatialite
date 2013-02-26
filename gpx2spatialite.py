@@ -9,6 +9,8 @@ tracklines to a database (SQL for database below)
 Copyright 2013 Daniel Belasco Rogers <http://planbperformance.net/dan>
                Peter Vasil <mail@petervasil.net>
 
+TODO: Check what happens if a user id is entered that isn't in the database
+
 To create a suitable database:
 In spatialite-gui, click on 'Create a&New (empty)SQLite DB' (second tool item)
 
@@ -244,6 +246,7 @@ e.g. python gpx2spatialite> -d <path/to/database -i <USER_ID> \
 
     filepath = args[0]
     checkfile(filepath)
+
     if options.username is not None:
         user = options.username
     else:
@@ -554,6 +557,23 @@ def insert_user(cursor, username):
     return get_user_id(cursor, username)
 
 
+def checkadd(cursor, user):
+    """
+    A name has been entered that is not in database. Ask if a new name
+    should be added
+    """
+    while 1:
+        question = 'Do you want to add %s as a new user? y or n ' % user
+        answer = raw_input(question)
+        answer = answer.lower()
+        if answer in ('y', 'yes'):
+            return True
+        if answer in ('n', 'no'):
+            return False
+        else:
+            print "Please answer y or n"
+
+
 def update_locations(cursor):
     """
     Update location of points.
@@ -605,12 +625,18 @@ def main():
         print "File already exists"
         sys.exit(2)
 
-    if type(user) is int:
-        user = user
-    elif type(user) is str:
+    try:
+        user = int(user)
+    except ValueError:
+        # a name (string) has been entered as an option, not an id
         userid = get_user_id(cursor, user)
         if userid == -1:
-            userid = insert_user(cursor, user)
+            # user name is not in database - ask to add
+            if checkadd(user):
+                userid = insert_user(cursor, user)
+            else:
+                print "Please run again specifying a known user:"
+                sys.exit(0)
         user = int(userid)
 
     print "\nParsing points in %s" % filepath
