@@ -6,10 +6,6 @@ Started Tue 12 Feb 2013 21:48:02 CET
 Using Tomo Krajina's gpx module, import a file record, trackpoints and
 tracklines to a database (SQL for database below)
 
-TODO: move file checking earlier so that not all points have to have
-their location looked up before finding out the file is already
-entered
-
 Copyright 2013 Daniel Belasco Rogers <http://planbperformance.net/dan>
                Peter Vasil <mail@petervasil.net>
 
@@ -487,7 +483,8 @@ def extractpoints(filepath, cursor):
                     time = point.time
                     ele = point.elevation
                     if ele is None:
-                        print "No elevation recorded for %s - assuming 0" % time
+                        print "No elevation recorded for "\
+                            "%s - assuming 0" % time
                         ele = 0
                     speed = point.speed
 
@@ -569,6 +566,24 @@ def update_locations(cursor):
     cursor.execute(sql)
 
 
+def check_if_gpxfile_exists(cursor, filepath):
+    """
+    Checks if file is already in database.
+    """
+    sql = "SELECT * FROM files WHERE md5hash = '%s'" % getmd5(filepath)
+
+    cursor.execute(sql)
+
+    try:
+        res = cursor.fetchall()
+        if len(res) > 0:
+            return True
+        else:
+            return False
+    except TypeError:
+        return False
+
+
 def main():
     """
     you know what 'main' does - run everything in the right order and
@@ -585,6 +600,10 @@ def main():
     if update_locs is True:
         update_locations(cursor)
         sys.exit(0)
+
+    if check_if_gpxfile_exists(cursor, filepath) is True:
+        print "File already exists"
+        sys.exit(2)
 
     if type(user) is int:
         user = user
