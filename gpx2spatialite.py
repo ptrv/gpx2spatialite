@@ -220,23 +220,39 @@ def parseargs():
                          metavar="USER_NAME",
                          help="Set username")
 
+    optparser.add_option("-u",
+                         "--updatelocations",
+                         dest="update_locs",
+                         default=False,
+                         action="store_true",
+                         help="Update locations for points")
+
     (options, args) = optparser.parse_args()
-    if len(args) != 1:
+
+    update_locations = options.update_locs
+
+    if len(args) != 1 and update_locations is False:
         message = """
-Please define input GPX file and user number
-1=Daniel 2=Sophia
-e.g. python gpx2spatialite ~/path/to/gpxfile.gpx 1"""
+Wrong number of arguments!
+
+Please define input GPX
+e.g. python gpx2spatialite> -d <path/to/database -i <USER_ID> \
+</path/to/gpxfile.gpx>
+"""
         optparser.error("\n" + message)
+
+    dbpath = os.path.expanduser(options.dbasepath)
+    if update_locations is True:
+        return None, None, dbpath, True
 
     filepath = args[0]
     checkfile(filepath)
-    dbpath = os.path.expanduser(options.dbasepath)
     if options.username is not None:
         user = options.username
     else:
         user = options.userid
 
-    return filepath, user, dbpath
+    return filepath, user, dbpath, False
 
 
 def getmd5(filepath):
@@ -425,7 +441,7 @@ def get_location(cursor, lon, lat):
     try:
         loc_id = cursor.fetchone()[0]
     except TypeError:
-        # unknown city
+        # print "unknown city"
         loc_id = 1
 
     return loc_id
@@ -537,6 +553,18 @@ def insert_user(cursor, username):
     return get_user_id(cursor, username)
 
 
+def update_locations(cursor):
+    """
+    Update location of points.
+    """
+    sql = "UPDATE trackpoints SET citydef_uid = (SELECT citydefs.citydef_uid "
+    sql += "FROM citydefs WHERE within(trackpoints.geom, citydefs.geom)) "
+    sql += "WHERE (SELECT citydefs.citydef_uid FROM citydefs WHERE within"
+    sql += "(trackpoints.geom, citydefs.geom)) NOT NULL"
+
+    cursor.execute(sql)
+
+
 def main():
     """
     you know what 'main' does - run everything in the right order and
@@ -545,10 +573,14 @@ def main():
     # for timing (rough)
     starttime = datetime.now()
 
-    filepath, user, dbpath = parseargs()
+    filepath, user, dbpath, update_locs = parseargs()
 
     conn = spatialite.connect(dbpath)
     cursor = conn.cursor()
+
+    if update_locs is True:
+        update_locations(cursor)
+        sys.exit(0)
 
     if type(user) is int:
         user = user
