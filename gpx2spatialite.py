@@ -6,8 +6,9 @@ Started Tue 12 Feb 2013 21:48:02 CET
 Using Tomo Krajina's gpx module, import a file record, trackpoints and
 tracklines to a database (SQL for database below)
 
-TODO: work out why first point in segment gets a value for speed and
-course
+TODO: move file checking earlier so that not all points have to have
+their location looked up before finding out the file is already
+entered
 
 Copyright 2013 Daniel Belasco Rogers <http://planbperformance.net/dan>
                Peter Vasil <mail@petervasil.net>
@@ -367,9 +368,6 @@ def enterpoints(cursor, user, trkpts, file_uid):
     """
     for line in trkpts:
         trkseg_id, trksegpt_id, ele, time, course, speed, loc, geom = line
-        if ele is None:
-            print "No elevation recorded for %s - assuming 0" % time
-            ele = 0
         sql = "INSERT INTO trackpoints (trkseg_id, trksegpt_id, "
         sql += "ele, utctimestamp, course, speed, "
         sql += "file_uid, user_uid, citydef_uid, geom) "
@@ -488,6 +486,9 @@ def extractpoints(filepath, cursor):
 
                     time = point.time
                     ele = point.elevation
+                    if ele is None:
+                        print "No elevation recorded for %s - assuming 0" % time
+                        ele = 0
                     speed = point.speed
 
                     if lastpoint:
@@ -515,7 +516,10 @@ def extractpoints(filepath, cursor):
                 timestamp_start, timestamp_end = segment.get_time_bounds()
                 length_m = segment.length_2d()
                 time_sec = segment.get_duration()
-                speed_kph = (length_m / time_sec) * 3.6
+                try:
+                    speed_kph = (length_m / time_sec) * 3.6
+                except ZeroDivisionError:
+                    speed_kph = 0.0
                 linestr = "LINESTRING("
                 linestr += ",".join(pts_strs)
                 linestr += ")"
