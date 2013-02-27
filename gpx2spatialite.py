@@ -76,27 +76,19 @@ def parseargs():
                          dest="dbasepath",
                          metavar="FILE",
                          default=DEFAULTDB,
-                         help="Define path to alternate database")
+                         help="Define path to alternate database (mandatory)")
 
-    optparser.add_option("-i",
-                         "--userid",
-                         dest="userid",
-                         metavar="USER_ID",
-                         default=1,
-                         help="Set userid")
-
-    optparser.add_option("-n",
+    optparser.add_option("-u",
                          "--username",
                          dest="username",
                          metavar="USER_NAME",
-                         help="Set username")
+                         help="Set username (mandatory)")
 
-    optparser.add_option("-u",
-                         "--updatelocations",
+    optparser.add_option("--updatelocations",
                          dest="update_locs",
                          default=False,
                          action="store_true",
-                         help="Update locations for points")
+                         help="Update locations for points ('-u' not needed)")
 
     (options, args) = optparser.parse_args()
 
@@ -107,10 +99,15 @@ def parseargs():
 Wrong number of arguments!
 
 Please define input GPX
-e.g. python gpx2spatialite> -d <path/to/database -i <USER_ID> \
+e.g. python gpx2spatialite> -d <path/to/database -i <USER_NAME> \
 </path/to/gpxfile.gpx>
 """
         optparser.error("\n" + message)
+
+    if options.dbasepath is None:
+        print "Mandatory option is missing"
+        optparser.print_help
+        sys.exit(-1)
 
     dbpath = os.path.expanduser(options.dbasepath)
     if update_locations is True:
@@ -119,10 +116,12 @@ e.g. python gpx2spatialite> -d <path/to/database -i <USER_ID> \
     filepath = args[0]
     checkfile(filepath)
 
-    if options.username is not None:
-        user = options.username
-    else:
-        user = options.userid
+    if options.username is None:
+        print "Mandatory option is missing"
+        optparser.print_help
+        sys.exit(-1)
+
+    user = options.username
 
     return filepath, user, dbpath, False
 
@@ -429,13 +428,13 @@ def insert_user(cursor, username):
     return get_user_id(cursor, username)
 
 
-def checkadd(cursor, user):
+def checkadd(cursor, username):
     """
     A name has been entered that is not in database. Ask if a new name
     should be added
     """
     while 1:
-        question = 'Do you want to add %s as a new user? y or n ' % user
+        question = 'Do you want to add %s as a new user? y or n ' % username
         answer = raw_input(question)
         answer = answer.lower()
         if answer in ('y', 'yes'):
@@ -484,7 +483,7 @@ def main():
     # for timing (rough)
     starttime = datetime.now()
 
-    filepath, user, dbpath, update_locs = parseargs()
+    filepath, username, dbpath, update_locs = parseargs()
 
     conn = spatialite.connect(dbpath)
     cursor = conn.cursor()
@@ -497,19 +496,15 @@ def main():
         print "File already exists"
         sys.exit(2)
 
-    try:
-        user = int(user)
-    except ValueError:
-        # a name (string) has been entered as an option, not an id
-        userid = get_user_id(cursor, user)
-        if userid == -1:
-            # user name is not in database - ask to add
-            if checkadd(user):
-                userid = insert_user(cursor, user)
-            else:
-                print "Please run again specifying a known user:"
-                sys.exit(0)
-        user = int(userid)
+    # a name (string) has been entered as an option, not an id
+    userid = get_user_id(cursor, username)
+    if userid == -1:
+        # user name is not in database - ask to add
+        if checkadd(cursor, username):
+            userid = insert_user(cursor, username)
+        else:
+            print "Please run again specifying a known user:"
+            sys.exit(0)
 
     print "\nParsing points in %s" % filepath
     trkpts, trklines, firsttimestamp, lasttimestamp = extractpoints(filepath,
@@ -520,15 +515,15 @@ def main():
     print "\nParsing %d points from gpx file took %s " % (len(trkpts),
                                                           endtime - starttime)
     print "Entering file into database"
-    enterfile(filepath, cursor, user, firsttimestamp, lasttimestamp)
+    enterfile(filepath, cursor, userid, firsttimestamp, lasttimestamp)
 
     file_uid = getcurrentfileid(cursor)
 
     print "Entering points into database"
-    enterpoints(cursor, user, trkpts, file_uid)
+    enterpoints(cursor, userid, trkpts, file_uid)
 
     print "Entering lines into database"
-    enterlines(cursor, user, trklines, file_uid)
+    enterlines(cursor, userid, trklines, file_uid)
 
     conn.commit()
     conn.close()
