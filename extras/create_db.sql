@@ -55,6 +55,7 @@ REFERENCES citydefs (citydef_uid),
 UNIQUE (utctimestamp, user_uid));
 
 SELECT AddGeometryColumn('trackpoints', 'geom', 4326, 'POINT', 'XY');
+SELECT CreateSpatialIndex('trackpoints', 'geom');
 
 -- CREATE TRIGGER "ggi_trackpoints_geom" BEFORE INSERT ON "trackpoints"
 -- FOR EACH ROW BEGIN
@@ -90,6 +91,7 @@ UNIQUE (timestamp_start, user_uid, trkseg_id)
 );
 
 SELECT AddGeometryColumn('tracklines', 'geom', 4326, 'LINESTRING', 'XY');
+SELECT CreateSpatialIndex('tracklines', 'geom');
 
 -- CREATE TRIGGER "ggi_tracklines_geom" BEFORE INSERT ON "tracklines"
 -- FOR EACH ROW BEGIN
