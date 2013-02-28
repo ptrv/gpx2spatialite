@@ -69,61 +69,55 @@ def parseargs():
     """
     parse command line arguments and define options etc
     """
-    usage = "usage: %prog /path/to/gpx/file.gpx"
-    optparser = OptionParser(usage, version="%prog 0.1")
+    usage = "usage: %prog [options] /path/to/gpx/file.gpx <username>"
+    optparser = OptionParser(usage, version="%prog 0.2")
     optparser.add_option("-d",
                          "--database",
                          dest="dbasepath",
                          metavar="FILE",
                          default=DEFAULTDB,
-                         help="Define path to alternate database (mandatory)")
-
-    optparser.add_option("-u",
-                         "--username",
-                         dest="username",
-                         metavar="USER_NAME",
-                         help="Set username (mandatory)")
+                         help="Define path to alternate database")
 
     optparser.add_option("--updatelocations",
                          dest="update_locs",
                          default=False,
                          action="store_true",
-                         help="Update locations for points ('-u' not needed)")
+                         help="Update locations for points \
+(<username>, <gpxfile> not needed)")
+
+    optparser.add_option("-s",
+                         "--skiplocations",
+                         dest="skip_locs",
+                         default=False,
+                         action="store_true",
+                         help="Skip querying locations for points (faster)")
 
     (options, args) = optparser.parse_args()
 
     update_locations = options.update_locs
 
-    if len(args) != 1 and update_locations is False:
+    if len(args) != 2 and update_locations is False:
         message = """
 Wrong number of arguments!
 
-Please define input GPX
-e.g. python gpx2spatialite> -d <path/to/database -i <USER_NAME> \
-</path/to/gpxfile.gpx>
+Please define input GPX and username
+e.g. python gpx2spatialite </path/to/gpxfile.gpx>
+<username>
 """
         optparser.error("\n" + message)
 
-    if options.dbasepath is None:
-        print "Mandatory option is missing"
-        optparser.print_help
-        sys.exit(-1)
-
     dbpath = os.path.expanduser(options.dbasepath)
+
     if update_locations is True:
-        return None, None, dbpath, True
+        return None, None, dbpath, skip_locs, True
 
     filepath = args[0]
     checkfile(filepath)
 
-    if options.username is None:
-        print "Mandatory option is missing"
-        optparser.print_help
-        sys.exit(-1)
+    user = args[1]
+    skip_locs = options.skip_locs
 
-    user = options.username
-
-    return filepath, user, dbpath, False
+    return filepath, user, dbpath, skip_locs, False
 
 
 def getmd5(filepath):
@@ -315,7 +309,7 @@ def get_location(cursor, lon, lat):
     return loc_id
 
 
-def extractpoints(filepath, cursor):
+def extractpoints(filepath, cursor, skip_locs):
     """
     parse the gpx file using gpxpy and return a list of lines
 
@@ -375,7 +369,10 @@ def extractpoints(filepath, cursor):
                         if not speed:
                             speed = 0
 
-                    loc = get_location(cursor, lon, lat)
+                    if not skip_locs:
+                        loc = get_location(cursor, lon, lat)
+                    else:
+                        loc = -1
 
                     ptline = [lastseg, trksegpt_id, ele, time,
                               course, speed, loc, geom_str]
@@ -401,6 +398,36 @@ def extractpoints(filepath, cursor):
                 print "skipping segment with < 2 points"
 
     return trkpts, trklines, firsttimestamp, lasttimestamp
+
+
+def update_locations(cursor):
+    """
+    Update location of points.
+    """
+    sql = "UPDATE trackpoints SET citydef_uid = (SELECT citydefs.citydef_uid "
+    sql += "FROM citydefs WHERE within(trackpoints.geom, citydefs.geom)) "
+    sql += "WHERE (SELECT citydefs.citydef_uid FROM citydefs WHERE within"
+    sql += "(trackpoints.geom, citydefs.geom)) NOT NULL"
+
+    cursor.execute(sql)
+
+
+def check_if_gpxfile_exists(cursor, filepath):
+    """
+    Checks if file is already in database.
+    """
+    sql = "SELECT * FROM files WHERE md5hash = '%s'" % getmd5(filepath)
+
+    cursor.execute(sql)
+
+    try:
+        res = cursor.fetchall()
+        if len(res) > 0:
+            return True
+        else:
+            return False
+    except TypeError:
+        return False
 
 
 def get_user_id(cursor, username):
@@ -445,36 +472,6 @@ def checkadd(cursor, username):
             print "Please answer y or n"
 
 
-def update_locations(cursor):
-    """
-    Update location of points.
-    """
-    sql = "UPDATE trackpoints SET citydef_uid = (SELECT citydefs.citydef_uid "
-    sql += "FROM citydefs WHERE within(trackpoints.geom, citydefs.geom)) "
-    sql += "WHERE (SELECT citydefs.citydef_uid FROM citydefs WHERE within"
-    sql += "(trackpoints.geom, citydefs.geom)) NOT NULL"
-
-    cursor.execute(sql)
-
-
-def check_if_gpxfile_exists(cursor, filepath):
-    """
-    Checks if file is already in database.
-    """
-    sql = "SELECT * FROM files WHERE md5hash = '%s'" % getmd5(filepath)
-
-    cursor.execute(sql)
-
-    try:
-        res = cursor.fetchall()
-        if len(res) > 0:
-            return True
-        else:
-            return False
-    except TypeError:
-        return False
-
-
 def main():
     """
     you know what 'main' does - run everything in the right order and
@@ -483,7 +480,7 @@ def main():
     # for timing (rough)
     starttime = datetime.now()
 
-    filepath, username, dbpath, update_locs = parseargs()
+    filepath, username, dbpath, skip_locs, update_locs = parseargs()
 
     conn = spatialite.connect(dbpath)
     cursor = conn.cursor()
@@ -492,23 +489,24 @@ def main():
         update_locations(cursor)
         sys.exit(0)
 
-    if check_if_gpxfile_exists(cursor, filepath) is True:
-        print "File already exists"
-        sys.exit(2)
-
-    # a name (string) has been entered as an option, not an id
     userid = get_user_id(cursor, username)
     if userid == -1:
         # user name is not in database - ask to add
         if checkadd(cursor, username):
+            print "User %s sucessfully added to database" % username
             userid = insert_user(cursor, username)
         else:
             print "Please run again specifying a known user:"
             sys.exit(0)
 
+    if check_if_gpxfile_exists(cursor, filepath) is True:
+        print "File already exists"
+        sys.exit(2)
+
     print "\nParsing points in %s" % filepath
     trkpts, trklines, firsttimestamp, lasttimestamp = extractpoints(filepath,
-                                                                    cursor)
+                                                                    cursor,
+                                                                    skip_locs)
     print "File first timestamp: %s, last timestamp: %s" % (firsttimestamp,
                                                             lasttimestamp)
     endtime = datetime.now()
