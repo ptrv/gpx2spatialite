@@ -5,7 +5,7 @@
 -- trackpoints
 -- tracklines
 
--- PRAGMA foreign_keys=OFF;
+PRAGMA foreign_keys = ON;
 
 BEGIN TRANSACTION;
 
@@ -27,7 +27,7 @@ REFERENCES users (user_uid),
 UNIQUE (md5hash));
 
 CREATE TABLE trackpoints (
-trkpt_uid INTEGER PRIMARY KEY AUTOINCREMENT,
+trkpt_uid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 trkseg_id INTEGER,
 trksegpt_id INTEGER,
 ele REAL NOT NULL,
@@ -39,11 +39,11 @@ file_uid INTEGER NOT NULL,
 user_uid INTEGER NOT NULL,
 citydef_uid INTEGER,
 FOREIGN KEY (file_uid)
-REFERENCES file (file_uid),
+REFERENCES files (file_uid) ON DELETE CASCADE ON UPDATE CASCADE,
 FOREIGN KEY (user_uid)
-REFERENCES users (user_uid),
+REFERENCES users (user_uid) ON DELETE CASCADE ON UPDATE CASCADE,
 FOREIGN KEY (trkseg_id)
-REFERENCES tracksegments (trkseg_uid),
+REFERENCES tracksegments (trkseg_uid) ON DELETE CASCADE ON UPDATE CASCADE,
 FOREIGN KEY (citydef_uid)
 REFERENCES citydefs (citydef_uid),
 UNIQUE (utctimestamp, user_uid));
@@ -63,11 +63,11 @@ speed_kph REAL,
 file_uid INTEGER NOT NULL,
 user_uid INTEGER NOT NULL,
 FOREIGN KEY (file_uid)
-REFERENCES file (file_uid),
+REFERENCES files (file_uid) ON DELETE CASCADE ON UPDATE CASCADE,
 FOREIGN KEY (user_uid)
-REFERENCES users (user_uid),
+REFERENCES users (user_uid) ON DELETE CASCADE ON UPDATE CASCADE,
 FOREIGN KEY (trkseg_id)
-REFERENCES tracksegments (trkseg_uid),
+REFERENCES tracksegments (trkseg_uid) ON DELETE CASCADE ON UPDATE CASCADE,
 UNIQUE (timestamp_start, user_uid, trkseg_id)
 );
 
