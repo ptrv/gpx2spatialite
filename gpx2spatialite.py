@@ -231,20 +231,35 @@ def enterpoints(cursor, user, trkpts, file_uid):
     """
     for line in trkpts:
         trkseg_id, trksegpt_id, ele, time, course, speed, loc, geom = line
-        sql = "INSERT INTO trackpoints (trkseg_id, trksegpt_id, "
-        sql += "ele, utctimestamp, course, speed, "
-        sql += "file_uid, user_uid, citydef_uid, geom) "
-        sql += "VALUES (%d, %d, %f, '%s', %f, %f, %d, %d, %d, "\
-               "GeomFromText('%s', 4326))" % (trkseg_id,
-                                              trksegpt_id,
-                                              ele,
-                                              time,
-                                              course,
-                                              speed,
-                                              file_uid,
-                                              user,
-                                              loc,
-                                              geom)
+        if loc == -1:
+            sql = "INSERT INTO trackpoints (trkseg_id, trksegpt_id, "
+            sql += "ele, utctimestamp, course, speed, "
+            sql += "file_uid, user_uid, geom) "
+            sql += "VALUES (%d, %d, %f, '%s', %f, %f, %d, %d, "\
+                "GeomFromText('%s', 4326))" % (trkseg_id,
+                                               trksegpt_id,
+                                               ele,
+                                               time,
+                                               course,
+                                               speed,
+                                               file_uid,
+                                               user,
+                                               geom)
+        else:
+            sql = "INSERT INTO trackpoints (trkseg_id, trksegpt_id, "
+            sql += "ele, utctimestamp, course, speed, "
+            sql += "file_uid, user_uid, citydef_uid, geom) "
+            sql += "VALUES (%d, %d, %f, '%s', %f, %f, %d, %d, %d, "\
+                "GeomFromText('%s', 4326))" % (trkseg_id,
+                                               trksegpt_id,
+                                               ele,
+                                               time,
+                                               course,
+                                               speed,
+                                               file_uid,
+                                               user,
+                                               loc,
+                                               geom)
         try:
             cursor.execute(sql)
         except spatialite.IntegrityError as e:
@@ -399,16 +414,23 @@ def extractpoints(filepath, cursor, skip_locs):
     return trkpts, trklines, firsttimestamp, lasttimestamp
 
 
-def update_locations(cursor):
+def update_locations(connection):
     """
     Update location of points.
     """
+    connection.cursor().execute("PRAGMA foreign_keys = ON")
+
+    sql = "UPDATE trackpoints SET citydef_uid = 1 WHERE citydef_uid IS NULL"
+    connection.cursor().execute(sql)
+    connection.commit()
+
     sql = "UPDATE trackpoints SET citydef_uid = (SELECT citydefs.citydef_uid "
     sql += "FROM citydefs WHERE within(trackpoints.geom, citydefs.geom)) "
     sql += "WHERE (SELECT citydefs.citydef_uid FROM citydefs WHERE within"
     sql += "(trackpoints.geom, citydefs.geom)) NOT NULL"
 
-    cursor.execute(sql)
+    connection.cursor().execute(sql)
+    connection.commit()
 
 
 def check_if_gpxfile_exists(cursor, filepath):
@@ -485,7 +507,7 @@ def main():
     cursor = conn.cursor()
 
     if update_locs is True:
-        update_locations(cursor)
+        update_locations(conn)
         sys.exit(0)
 
     userid = get_user_id(cursor, username)
