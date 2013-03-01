@@ -101,8 +101,7 @@ def parseargs():
 Wrong number of arguments!
 
 Please define input GPX and username
-e.g. python gpx2spatialite </path/to/gpxfile.gpx>
-<username>
+e.g. python gpx2spatialite </path/to/gpxfile.gpx> <username>
 """
         optparser.error("\n" + message)
 
