@@ -108,7 +108,7 @@ e.g. python gpx2spatialite </path/to/gpxfile.gpx> <username>
     dbpath = os.path.expanduser(options.dbasepath)
 
     if update_locations is True:
-        return None, None, dbpath, skip_locs, True
+        return None, None, dbpath, None, True
 
     filepath = args[0]
     checkfile(filepath)
