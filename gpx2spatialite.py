@@ -418,18 +418,32 @@ def update_locations(connection):
     """
     Update location of points.
     """
-    connection.cursor().execute("PRAGMA foreign_keys = ON")
+    cur = connection.cursor()
+    cur.execute("PRAGMA foreign_keys = ON")
 
-    sql = "UPDATE trackpoints SET citydef_uid = 1 WHERE citydef_uid IS NULL"
-    connection.cursor().execute(sql)
-    connection.commit()
+    sql = "select *, astext(geom) from trackpoints "
+    sql += "where citydef_uid = 1 or citydef_uid is null"
 
-    sql = "UPDATE trackpoints SET citydef_uid = (SELECT citydefs.citydef_uid "
-    sql += "FROM citydefs WHERE within(trackpoints.geom, citydefs.geom)) "
-    sql += "WHERE (SELECT citydefs.citydef_uid FROM citydefs WHERE within"
-    sql += "(trackpoints.geom, citydefs.geom)) NOT NULL"
+    rs = cur.execute(sql)
+    unknowns = rs.fetchall()
 
-    connection.cursor().execute(sql)
+    print "%d trackpoints with unknown location" % (len(unknowns))
+
+    num_updated = 0
+    for row in unknowns:
+        sql = "select * from citydefs where within("
+        sql += "GeomFromText('%s'), geom)" % (row[12])
+        rs2 = cur.execute(sql)
+        city = rs2.fetchone()
+        if city is not None:
+            sql = "update trackpoints set citydef_uid = %d " % (city[0])
+            sql += "where trkpt_uid = %d" % (row[0])
+            cur.execute(sql)
+            num_updated += 1
+
+    print "updated %d trackpoints" % (num_updated)
+
+    cur.close()
     connection.commit()
 
 
