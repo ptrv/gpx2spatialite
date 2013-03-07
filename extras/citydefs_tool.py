@@ -12,7 +12,7 @@ def parseargs():
     """
     Parse commandline arguments
     """
-    usage = "usage: %prog /path/to/gpx/file.gpx"
+    usage = "usage: %prog /path/to/database.sqlite /path/to/input_output.sql"
     optparser = OptionParser(usage, version="%prog 0.1")
     optparser.add_option("-e",
                          "--export",
