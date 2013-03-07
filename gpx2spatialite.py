@@ -545,6 +545,8 @@ def main():
     enterlines(cursor, userid, trklines, file_uid)
 
     conn.commit()
+
+    cursor.close()
     conn.close()
 
     endtime = datetime.now()
