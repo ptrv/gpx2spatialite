@@ -69,8 +69,8 @@ def parseargs():
     """
     parse command line arguments and define options etc
     """
-    usage = "usage: %prog [options] /path/to/gpx/file.gpx <username>"
-    optparser = OptionParser(usage, version="%prog 0.2")
+    usage = "usage: %prog [options] <username> /path/to/gpx/file.gpx"
+    optparser = OptionParser(usage, version="%prog 0.3")
     optparser.add_option("-d",
                          "--database",
                          dest="dbasepath",
@@ -96,12 +96,12 @@ def parseargs():
 
     update_locations = options.update_locs
 
-    if len(args) != 2 and update_locations is False:
+    if len(args) < 2 and update_locations is False:
         message = """
 Wrong number of arguments!
 
 Please define input GPX and username
-e.g. python gpx2spatialite </path/to/gpxfile.gpx> <username>
+e.g. python gpx2spatialite <username> </path/to/gpxfile.gpx>
 """
         optparser.error("\n" + message)
 
@@ -110,13 +110,15 @@ e.g. python gpx2spatialite </path/to/gpxfile.gpx> <username>
     if update_locations is True:
         return None, None, dbpath, None, True
 
-    filepath = args[0]
-    checkfile(filepath)
+    user = args[0]
 
-    user = args[1]
+    filepaths = args[1:]
+    for f in filepaths:
+        checkfile(f)
+
     skip_locs = options.skip_locs
 
-    return filepath, user, dbpath, skip_locs, False
+    return filepaths, user, dbpath, skip_locs, False
 
 
 def getmd5(filepath):
@@ -516,7 +518,7 @@ def main():
     # for timing (rough)
     starttime = datetime.now()
 
-    filepath, username, dbpath, skip_locs, update_locs = parseargs()
+    filepaths, username, dbpath, skip_locs, update_locs = parseargs()
 
     conn = spatialite.connect(dbpath)
     cursor = conn.cursor()
@@ -531,40 +533,59 @@ def main():
         if checkadd(cursor, username):
             print "User %s sucessfully added to database" % username
             userid = insert_user(cursor, username)
+            conn.commit()
         else:
             print "Please run again specifying a known user:"
+            cursor.close()
+            conn.close()
             sys.exit(0)
 
-    if check_if_gpxfile_exists(cursor, filepath) is True:
-        print "File already exists"
-        sys.exit(2)
+    new_filepaths = []
+    for filepath in filepaths:
+        if check_if_gpxfile_exists(cursor, filepath) is True:
+            print "File %s already in database" % filepath
+        else:
+            new_filepaths.append(filepath)
 
-    print "\nParsing points in %s" % filepath
-    trkpts, trklines, firsttimestamp, lasttimestamp = extractpoints(filepath,
-                                                                    cursor,
-                                                                    skip_locs)
-    print "File first timestamp: %s, last timestamp: %s" % (firsttimestamp,
-                                                            lasttimestamp)
-    endtime = datetime.now()
-    print "\nParsing %d points from gpx file took %s " % (len(trkpts),
-                                                          endtime - starttime)
-    print "Entering file into database"
-    enterfile(filepath, cursor, userid, firsttimestamp, lasttimestamp)
+    for filepath in new_filepaths:
+        parsing_starttimep = datetime.now()
+        print "#" * 48
+        print "Parsing points in %s" % filepath
+        trkpts, trklines, firsttimestamp, lasttimestamp = extractpoints(
+            filepath, cursor, skip_locs
+        )
 
-    file_uid = getcurrentfileid(cursor)
+        dbg_str = "File first timestamp: %s, " % firsttimestamp
+        dbg_str += "last timestamp: %s" % lasttimestamp
+        print dbg_str
 
-    print "Entering points into database"
-    enterpoints(cursor, userid, trkpts, file_uid)
+        parsing_endtime = datetime.now()
+        dbg_str = "\nParsing %d points from gpx file " % len(trkpts)
+        dbg_str += "took %s" % (parsing_endtime - parsing_starttimep)
+        print dbg_str
 
-    print "Entering lines into database"
-    enterlines(cursor, userid, trklines, file_uid)
+        db_starttime = datetime.now()
+        # print "Entering file into database"
+        enterfile(filepath, cursor, userid, firsttimestamp, lasttimestamp)
 
-    conn.commit()
+        file_uid = getcurrentfileid(cursor)
+
+        # print "Entering points into database"
+        enterpoints(cursor, userid, trkpts, file_uid)
+
+        # print "Entering lines into database"
+        enterlines(cursor, userid, trklines, file_uid)
+
+        conn.commit()
+
+        db_endtime = datetime.now()
+        print "Entering into database took %s" % (db_endtime - db_starttime)
 
     cursor.close()
     conn.close()
 
     endtime = datetime.now()
+    print "#" * 48
     print "Script took %s\n" % (endtime - starttime)
 
 if __name__ == '__main__':
