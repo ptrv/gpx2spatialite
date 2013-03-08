@@ -26,6 +26,7 @@ tables in the database so you can start again
 # standard imports
 import sys
 import os.path
+import glob
 import hashlib
 from datetime import datetime
 from optparse import OptionParser
@@ -55,10 +56,10 @@ def checkfile(filepath):
     Checks if file exists at location
     TODO check if it's a GPX file - How?
     """
-    if not(os.path.isfile(filepath)):
+    if (not(os.path.isfile(filepath)) and not(os.path.isdir(filepath))):
         print '*' * 48
-        print "%s is not a file" % filepath
-        print "please retry with a file path e.g."\
+        print "%s is not a file or directory" % filepath
+        print "please retry with a file path or directory e.g."\
               " ~/currentGPS/dan2012/1_originalfiles/2012-D-01.gpx"
         print '*' * 48
         sys.exit(2)
@@ -542,10 +543,17 @@ def main():
 
     new_filepaths = []
     for filepath in filepaths:
-        if check_if_gpxfile_exists(cursor, filepath) is True:
-            print "File %s already in database" % filepath
+        if os.path.isdir(filepath) is True:
+            for gpxfile in glob.glob(os.path.join(filepath, "*.gpx")):
+                if check_if_gpxfile_exists(cursor, gpxfile) is True:
+                    print "File %s already in database" % gpxfile
+                else:
+                    new_filepaths.append(gpxfile)
         else:
-            new_filepaths.append(filepath)
+            if check_if_gpxfile_exists(cursor, filepath) is True:
+                print "File %s already in database" % filepath
+            else:
+                new_filepaths.append(filepath)
 
     for filepath in new_filepaths:
         parsing_starttimep = datetime.now()
