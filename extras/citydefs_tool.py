@@ -26,19 +26,16 @@ def parseargs():
                          default=False,
                          action="store_true",
                          help="Import citydefs")
-    # optparser.add_option("-d",
-    #                      "--database",
-    #                      dest="database",
-    #                      metavar="FILE",
-    #                      help="Define path to database")
 
     (options, args) = optparser.parse_args()
-
+    if len(args) != 2:
+        error = "Specify a database path and an import/export sql file"
+        optparser.error(error)
+        sys.exit(2)
     dbpath = os.path.expanduser(args[0])
     in_out_file = args[1]
     is_export = options.export_citydefs
     is_import = options.import_citydefs
-    # dbpath = os.path.expanduser(options.database)
 
     return is_export, is_import, dbpath, in_out_file
 
@@ -47,17 +44,17 @@ def export_citydefs(cursor, out_file):
     """
     Export citydefs from database to a sql insert script.
     """
-    sql = "SELECT citydef_uid, city, country, Hex(geom) "
+    sql = "SELECT citydef_uid, city, country, AsText(geom) "
     sql += "FROM citydefs ORDER BY citydef_uid"
-
     cursor.execute(sql)
 
     out_file.write("BEGIN TRANSACTION;\n")
     for row in cursor.fetchall():
         line = "INSERT INTO citydefs ('city', 'country', 'geom') VALUES"
-        line += "(\"%s\", \"%s\", X'%s');\n" % (row[1].encode('utf-8'),
-                                                row[2].encode('utf-8'),
-                                                row[3].encode('utf-8'))
+        line += "(\"%s\", \"%s\", "
+        line += "GeomFromText('%s', 4326));\n" % (row[1].encode('utf-8'),
+                                                  row[2].encode('utf-8'),
+                                                  row[3].encode('utf-8'))
         out_file.write(line)
     out_file.write("COMMIT;\n")
 
