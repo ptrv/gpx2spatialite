@@ -36,6 +36,10 @@ def parseargs():
     in_out_file = args[1]
     is_export = options.export_citydefs
     is_import = options.import_citydefs
+    if not is_export and not is_import:
+        error = "Please select option -e or -i"
+        optparser.error(error)
+        sys.exit(2)
 
     return is_export, is_import, dbpath, in_out_file
 
@@ -51,10 +55,10 @@ def export_citydefs(cursor, out_file):
     out_file.write("BEGIN TRANSACTION;\n")
     for row in cursor.fetchall():
         line = "INSERT INTO citydefs ('city', 'country', 'geom') VALUES"
-        line += "(\"%s\", \"%s\", "
-        line += "GeomFromText('%s', 4326));\n" % (row[1].encode('utf-8'),
-                                                  row[2].encode('utf-8'),
-                                                  row[3].encode('utf-8'))
+        line += "(\"%s\", \"%s\", "\
+        "GeomFromText('%s', 4326));\n" % (row[1].encode('utf-8'),
+                                          row[2].encode('utf-8'),
+                                          row[3].encode('utf-8'))
         out_file.write(line)
     out_file.write("COMMIT;\n")
 
@@ -86,8 +90,6 @@ def main():
         with open(filepath, "r") as f:
             import_citydefs(cursor, f)
             conn.commit()
-    else:
-        sys.exit(2)
 
     conn.close()
 
