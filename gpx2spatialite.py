@@ -422,7 +422,7 @@ def update_locations(connection):
     Update location of points.
     """
     cur = connection.cursor()
-    cur.execute("PRAGMA foreign_keys = ON")
+    # cur.execute("PRAGMA foreign_keys = ON")
 
     sql = "select *, astext(geom) from trackpoints "
     sql += "where citydef_uid = 1 or citydef_uid is null"
@@ -444,6 +444,12 @@ def update_locations(connection):
             sql += "and citydef_uid is not 1"
             cur.execute(sql)
             num_updated += 1
+        else:
+            if row[10] is None:
+                sql = "update trackpoints set citydef_uid = 1 "
+                sql += "where trkpt_uid = %d" % (row[0])
+                cur.execute(sql)
+                num_updated += 1
 
     print "updated %d trackpoints" % (num_updated)
 
