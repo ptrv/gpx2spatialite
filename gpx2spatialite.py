@@ -9,8 +9,6 @@ tracklines to a database (SQL for database below)
 Copyright 2013 Daniel Belasco Rogers <http://planbperformance.net/dan>
                Peter Vasil <mail@petervasil.net>
 
-TODO: Check what happens if a user id is entered that isn't in the database
-
 To create a suitable database:
 In spatialite-gui, click on 'Create a&New (empty)SQLite DB' (second tool
 item)
@@ -95,9 +93,9 @@ def parseargs():
 
     (options, args) = optparser.parse_args()
 
-    update_locations = options.update_locs
+    update_locs = options.update_locs
 
-    if len(args) < 2 and update_locations is False:
+    if len(args) < 2 and update_locs is False:
         message = """
 Wrong number of arguments!
 
@@ -108,7 +106,7 @@ e.g. python gpx2spatialite <username> </path/to/gpxfile.gpx>
 
     dbpath = os.path.expanduser(options.dbasepath)
 
-    if update_locations is True:
+    if update_locs is True:
         return None, None, dbpath, None, True
 
     user = args[0]
@@ -185,10 +183,10 @@ def enterfile(filepath, cursor, user, firsttimestamp, lasttimestamp):
     # entered
     try:
         cursor.execute(sql)
-    except spatialite.IntegrityError as e:
+    except spatialite.IntegrityError as err:
         print "*" * 43
         print "File already entered. Please try again"
-        print e
+        print err
         print "*" * 43
         sys.exit(2)
 
@@ -265,8 +263,8 @@ def enterpoints(cursor, user, trkpts, file_uid):
                                                geom)
         try:
             cursor.execute(sql)
-        except spatialite.IntegrityError as e:
-            print "Not importing duplicate point from %s: %s" % (time, e)
+        except spatialite.IntegrityError as err:
+            print "Not importing duplicate point from %s: %s" % (time, err)
 
 
 def enterlines(cursor, user, trklines, file_uid):
@@ -427,8 +425,8 @@ def update_locations(connection):
     sql = "select *, astext(geom) from trackpoints "
     sql += "where citydef_uid = 1 or citydef_uid is null"
 
-    rs = cur.execute(sql)
-    unknowns = rs.fetchall()
+    res = cur.execute(sql)
+    unknowns = res.fetchall()
 
     print "%d trackpoints with unknown location" % (len(unknowns))
 
@@ -500,7 +498,7 @@ def insert_user(cursor, username):
     return get_user_id(cursor, username)
 
 
-def checkadd(cursor, username):
+def checkadd(username):
     """
     A name has been entered that is not in database. Ask if a new name
     should be added
@@ -537,7 +535,7 @@ def main():
     userid = get_user_id(cursor, username)
     if userid == -1:
         # user name is not in database - ask to add
-        if checkadd(cursor, username):
+        if checkadd(username):
             print "User %s sucessfully added to database" % username
             userid = insert_user(cursor, username)
             conn.commit()
