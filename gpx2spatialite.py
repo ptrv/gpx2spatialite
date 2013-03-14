@@ -438,8 +438,7 @@ def update_locations(connection):
         city = rs2.fetchone()
         if city is not None:
             sql = "update trackpoints set citydef_uid = %d " % (city[0])
-            sql += "where trkpt_uid = %d " % (row[0])
-            sql += "and citydef_uid is not 1"
+            sql += "where trkpt_uid = %d" % (row[0])
             cur.execute(sql)
             num_updated += 1
         else:
