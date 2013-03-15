@@ -16,3 +16,13 @@ Import/update citydefs into existing database:
 Export citydefs table:
 
     python extras/citydefs_tool.py -e <path/to/database> extras/insert_citydefs.sql
+
+## Unit tests
+
+Install `pytest` with the command
+
+    sudo easy_install pytest
+
+Run unit tests by executing the following command in the root directory
+
+    py.test
