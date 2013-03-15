@@ -11,10 +11,8 @@ A script for importing GPX files into a SpatiaLite database.
 
 Import/update citydefs into existing database:
 
-    spatialite <path/to/database> ".read extras/insert_citydefs.sql utf-8"
-
-The last command will cause errors for already existing entries and tables, but that's OK. New content will be imported anyway.
+    python extras/citydefs_tool.py -i <path/to/database> extras/insert_citydefs.sql
 
 Export citydefs table:
 
-    spatialite <path/to/database> ".dump citydefs" > extras/insert_citydefs.sql
+    python extras/citydefs_tool.py -e <path/to/database> extras/insert_citydefs.sql
