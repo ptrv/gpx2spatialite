@@ -36,9 +36,26 @@ def setup_db(request):
     cursor = conn.cursor()
 
     # set member variables in test class to access them later
+    # request.cls is calling class
     request.cls.conn = conn
     request.cls.cursor = cursor
     request.cls.dbpath = db_path
+
+    sql = "INSERT INTO citydefs ('city', 'country', 'geom') VALUES"
+    sql += "(\"Unknown\", \"Unknown\", GeomFromText('POLYGON"
+    sql += "((0 0, 0 0, 0 0, 0 0, 0 0))', 4326));"
+    cursor.execute(sql)
+
+    sql = "INSERT INTO citydefs ('city', 'country', 'geom') VALUES"
+    sql += "(\"Berlin\", \"DE\", GeomFromText('POLYGON("
+    sql += "(13.10156 52.370484, 13.10156 52.657235, 13.700291 52.657235, "
+    sql += "13.700291 52.370484, 13.10156 52.370484))', 4326));"
+    cursor.execute(sql)
+
+    sql = "insert into users('username') values ('testuser')"
+    cursor.execute(sql)
+
+    conn.commit()
 
     # remove test database
     def cleanup():
@@ -88,3 +105,28 @@ class TestGpx2Spatialite:
 
         assert len(extracted_points[0]) == 4
         assert len(extracted_points[1]) == 1
+
+    def test_insert_user(self):
+        userid = gpx2spatialite.insert_user(self.cursor, "testuser2")
+
+        assert userid == 2
+
+        sql = "select * from users where user_uid = 2"
+        res = self.cursor.execute(sql)
+        username = res.fetchone()[1]
+        assert username == "testuser2"
+
+    def test_enterfile(self):
+        extracted_points = gpx2spatialite.extractpoints(self.test_path,
+                                                        self.cursor,
+                                                        True)
+
+        gpx2spatialite.enterfile(self.test_path, self.cursor, 1,
+                                 extracted_points[2],
+                                 extracted_points[3])
+
+        sql = "select * from files"
+        res = self.cursor.execute(sql)
+        test_file_row = res.fetchone()
+
+        assert test_file_row[1] == os.path.basename(self.test_path)
