@@ -56,9 +56,9 @@ def export_citydefs(cursor, out_file):
     for row in cursor.fetchall():
         line = "INSERT INTO citydefs ('city', 'country', 'geom') VALUES"
         line += "(\"%s\", \"%s\", "\
-        "GeomFromText('%s', 4326));\n" % (row[1].encode('utf-8'),
-                                          row[2].encode('utf-8'),
-                                          row[3].encode('utf-8'))
+                "GeomFromText('%s', 4326));\n" % (row[1].encode('utf-8'),
+                                                  row[2].encode('utf-8'),
+                                                  row[3].encode('utf-8'))
         out_file.write(line)
     out_file.write("COMMIT;\n")
 
