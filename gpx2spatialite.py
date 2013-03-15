@@ -51,17 +51,12 @@ DEFAULTDB = "~/dansdocs/databases/emptytest.sqlite"
 
 def checkfile(filepath):
     """
-    Checks if file exists at location
-    TODO check if it's a GPX file - How?
+    Checks if file or folder exists at location
     """
-    if (not(os.path.isfile(filepath)) and not(os.path.isdir(filepath))):
-        print '*' * 48
-        print "%s is not a file or directory" % filepath
-        print "please retry with a file path or directory e.g."\
-              " ~/currentGPS/dan2012/1_originalfiles/2012-D-01.gpx"
-        print '*' * 48
-        sys.exit(2)
-    return
+    if (os.path.isfile(filepath) or os.path.isdir(filepath)):
+        return True
+    else:
+        return False
 
 
 def parseargs():
@@ -113,7 +108,9 @@ e.g. python gpx2spatialite <username> </path/to/gpxfile.gpx>
 
     filepaths = args[1:]
     for f in filepaths:
-        checkfile(f)
+        if checkfile(f) is False:
+            print "%s is not a file or directory" % f
+            sys.exit(2)
 
     skip_locs = options.skip_locs
 
