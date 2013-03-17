@@ -292,6 +292,29 @@ def enterlines(cursor, user, trklines, file_uid):
         cursor.execute(sql)
 
 
+def enterwaypoints(cursor, user, waypoints, file_uid):
+    """
+    """
+    for wpt in waypoints:
+        wpt_name, wpt_ele, wpt_time, wpt_sym, wpt_loc, wpt_geom = wpt
+        if wpt_loc == -1:
+            sql = "INSERT INTO waypoints (wpt_name, ele, utctimestamp, sym,"
+            sql += "file_uid, user_uid, geom) VALUES "
+            sql += "(\"%s\", %d, '%s', \"%s\", %d, %d,"\
+                " GeomFromText('%s', 4326))" % (wpt_name, wpt_ele, wpt_time,
+                                                wpt_sym, file_uid, user,
+                                                wpt_geom)
+        else:
+            sql = "INSERT INTO waypoints (wpt_name, ele, utctimestamp, sym,"
+            sql += "file_uid, user_uid, citydef_uid, geom) VALUES "
+            sql += "(\"%s\", %d, '%s', \"%s\", %d, %d, %d,"\
+                " GeomFromText('%s', 4326))" % (wpt_name, wpt_ele, wpt_time,
+                                                wpt_sym, file_uid, user,
+                                                wpt_loc, wpt_geom)
+
+        cursor.execute(sql)
+
+
 def insert_segment(cursor, seg_uuid):
     """
     Insert a tracksegment into the database.
@@ -321,7 +344,7 @@ def get_location(cursor, lon, lat):
     return loc_id
 
 
-def extractpoints(filepath, cursor, skip_locs):
+def extractpoints(filepath, cursor, skip_locs, skip_wpts):
     """
     parse the gpx file using gpxpy and return a list of lines
 
@@ -335,9 +358,12 @@ def extractpoints(filepath, cursor, skip_locs):
     points, file_uid, user_uid, geom
 
     tracksegment columns: trkseg_uid, trkseg_uuid
+
+    waypoint_line: name, ele, time, symbol, loc, geom
     """
     trklines = []
     trkpts = []
+    wpts = []
 
     gpx = gpxpy.parse(open(filepath))
 
@@ -409,7 +435,33 @@ def extractpoints(filepath, cursor, skip_locs):
             else:
                 print "skipping segment with < 2 points"
 
-    return trkpts, trklines, firsttimestamp, lasttimestamp
+    if not skip_wpts:
+        for wpt in gpx.waypoints:
+            wptline = []
+            wpt_lat = wpt.latitude
+            wpt_lon = wpt.longitude
+            wpt_geom_str = "Point(%f %f)" % (wpt_lon, wpt_lat)
+
+            wpt_name = wpt.name
+            wpt_symbol = wpt.symbol
+            wpt_time = wpt.time
+            wpt_ele = wpt.elevation
+            if wpt_ele is None:
+                print "No elevation recorded for "\
+                    "%s - assuming 0" % wpt_time
+                wpt_ele = 0
+
+            if not skip_locs:
+                wpt_loc = get_location(cursor, wpt_lon, wpt_lat)
+            else:
+                wpt_loc = -1
+
+            wptline = [wpt_name, wpt_ele, wpt_time, wpt_symbol, wpt_loc,
+                       wpt_geom_str]
+
+            wpts.append(wptline)
+
+    return trkpts, trklines, firsttimestamp, lasttimestamp, wpts
 
 
 def update_locations(connection):
@@ -558,8 +610,8 @@ def main():
         parsing_starttimep = datetime.now()
         print "#" * 48
         print "Parsing points in %s" % filepath
-        trkpts, trklines, firsttimestamp, lasttimestamp = extractpoints(
-            filepath, cursor, skip_locs
+        trkpts, trklines, firsttimestamp, lasttimestamp, wpts = extractpoints(
+            filepath, cursor, skip_locs, False
         )
 
         dbg_str = "File first timestamp: %s, " % firsttimestamp
@@ -567,8 +619,10 @@ def main():
         print dbg_str
 
         parsing_endtime = datetime.now()
-        dbg_str = "\nParsing %d points from gpx file " % len(trkpts)
-        dbg_str += "took %s" % (parsing_endtime - parsing_starttimep)
+        dbg_str = "\nParsing %d points and %d waypoints " % (len(trkpts),
+                                                             len(wpts))
+        dbg_str += "from gpx file took %s" % (parsing_endtime -
+                                              parsing_starttimep)
         print dbg_str
 
         db_starttime = datetime.now()
@@ -582,6 +636,9 @@ def main():
 
         # print "Entering lines into database"
         enterlines(cursor, userid, trklines, file_uid)
+
+        # print entering waypoints into database
+        enterwaypoints(cursor, userid, wpts, file_uid)
 
         conn.commit()
 

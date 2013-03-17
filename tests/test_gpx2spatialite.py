@@ -78,7 +78,7 @@ class TestGpx2Spatialite:
         file_path = os.path.expanduser(self.test_path)
         md5 = gpx2spatialite.getmd5(file_path)
 
-        assert md5 == "12102882287acd5b2cdd90118d40c47c"
+        assert md5 == "17228581bc70c73205e3031041ab1656"
 
     def test_getcourse(self):
         lat1 = 52.5113534275
@@ -93,8 +93,8 @@ class TestGpx2Spatialite:
     def test_extractpoints(self):
         extracted_points = gpx2spatialite.extractpoints(self.test_path,
                                                         self.cursor,
-                                                        True)
-        assert len(extracted_points) == 4
+                                                        True, False)
+        assert len(extracted_points) == 5
 
         expected_starttime = datetime.strptime('2012-03-17T12:46:19Z',
                                                '%Y-%m-%dT%H:%M:%SZ')
@@ -105,6 +105,8 @@ class TestGpx2Spatialite:
 
         assert len(extracted_points[0]) == 4
         assert len(extracted_points[1]) == 1
+
+        assert len(extracted_points[4]) == 2
 
     def test_insert_user(self):
         userid = gpx2spatialite.insert_user(self.cursor, "testuser2")
@@ -119,7 +121,7 @@ class TestGpx2Spatialite:
     def test_enterfile(self):
         extracted_points = gpx2spatialite.extractpoints(self.test_path,
                                                         self.cursor,
-                                                        True)
+                                                        True, True)
 
         gpx2spatialite.enterfile(self.test_path, self.cursor, 1,
                                  extracted_points[2],
@@ -130,3 +132,22 @@ class TestGpx2Spatialite:
         test_file_row = res.fetchone()
 
         assert test_file_row[1] == os.path.basename(self.test_path)
+
+    def test_enterwaypoints(self):
+        extracted_wpts = gpx2spatialite.extractpoints(self.test_path,
+                                                      self.cursor,
+                                                      True, False)
+
+        md5 = gpx2spatialite.getmd5(os.path.expanduser(self.test_path))
+
+        sql = "select * from files where md5hash = '%s'" % md5
+        res = self.cursor.execute(sql)
+        file_row = res.fetchone()
+
+        assert file_row[2] == md5
+
+        gpx2spatialite.enterwaypoints(self.cursor, file_row[6],
+                                      extracted_wpts[4], file_row[0])
+
+        sql = "select * from waypoints"
+        res = self.cursor.execute(sql)

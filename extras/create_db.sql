@@ -90,4 +90,23 @@ trkseg_uuid TEXT NOT NULL,
 UNIQUE(trkseg_uuid)
 );
 
+CREATE TABLE waypoints (
+wpt_uid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+wpt_name TEXT,
+ele REAL,
+utctimestamp TEXT,
+sym TEXT,
+file_uid INTEGER,
+user_uid INTEGER,
+citydef_uid INTEGER,
+FOREIGN KEY (file_uid)
+REFERENCES files (file_uid) ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY (user_uid)
+REFERENCES users (user_uid) ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY (citydef_uid)
+REFERENCES citydefs (citydef_uid));
+
+SELECT AddGeometryColumn('waypoints', 'geom', 4326, 'POINT', 'XY');
+SELECT CreateSpatialIndex('waypoints', 'geom');
+
 COMMIT;

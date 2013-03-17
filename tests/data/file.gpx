@@ -6,9 +6,17 @@
     </link>
     <time>2012-03-17T15:44:18Z</time>
   </metadata>
-  <wpt lat="50.8975" lon="-1.60883">
+  <wpt lat="37.085751" lon="-121.170420">
+    <ele>195.440933</ele>
+    <time>2012-03-21T21:24:43Z</time>
     <name>001</name>
-    <type>waypoint</type>
+    <sym>Flag, Blue</sym>
+  </wpt>
+  <wpt lat="37.085751" lon="-121.170420">
+    <ele>195.438324</ele>
+    <time>2012-03-21T21:24:44Z</time>
+    <name>002</name>
+    <sym>Flag, Blue</sym>
   </wpt>
   <trk>
     <name>17-MRZ-12 16:44:12</name>
