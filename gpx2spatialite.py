@@ -64,7 +64,7 @@ def parseargs():
     parse command line arguments and define options etc
     """
     usage = "usage: %prog [options] <username> /path/to/gpx/file.gpx"
-    optparser = OptionParser(usage, version="%prog 0.3")
+    optparser = OptionParser(usage, version="%prog 0.4")
     optparser.add_option("-d",
                          "--database",
                          dest="dbasepath",
