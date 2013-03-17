@@ -25,16 +25,19 @@ def set_gpx_path(request):
 @pytest.fixture(scope="class")
 def setup_db(request):
     db_path = os.path.abspath("tests/data/db.sqlite")
-    create_db_script = os.path.abspath("extras/create_db.sql")
-    spatialite_cmd_str = ".read %s utf-8" % create_db_script
-    create_cmd = ["spatialite", db_path, spatialite_cmd_str]
+    if not os.path.isfile(db_path):
+        create_db_script = os.path.abspath("extras/create_db.sql")
+        spatialite_cmd_str = ".read %s utf-8" % create_db_script
+        create_cmd = ["spatialite", db_path, spatialite_cmd_str]
 
-    # create database
-    call(create_cmd)
+        # create database
+        call(create_cmd)
 
     conn = spatialite.connect(db_path)
     cursor = conn.cursor()
 
+    # cursor.execute("savepoint test")
+    # conn.commit()
     # set member variables in test class to access them later
     # request.cls is calling class
     request.cls.conn = conn
@@ -55,13 +58,14 @@ def setup_db(request):
     sql = "insert into users('username') values ('testuser')"
     cursor.execute(sql)
 
-    conn.commit()
+    # conn.commit()
 
     # remove test database
     def cleanup():
+        conn.rollback()
         cursor.close()
         conn.close()
-        call(["rm", db_path])
+        # call(["rm", db_path])
 
     # run cleanup function after tests finished
     request.addfinalizer(cleanup)
