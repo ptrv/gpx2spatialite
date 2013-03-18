@@ -137,21 +137,89 @@ class TestGpx2Spatialite:
 
         assert test_file_row[1] == os.path.basename(self.test_path)
 
-    def test_enterwaypoints(self):
-        extracted_wpts = gpx2spatialite.extractpoints(self.test_path,
-                                                      self.cursor,
-                                                      True, False)
-
+    def get_file_and_user(self):
         md5 = gpx2spatialite.getmd5(os.path.expanduser(self.test_path))
 
         sql = "select * from files where md5hash = '%s'" % md5
         res = self.cursor.execute(sql)
         file_row = res.fetchone()
 
-        assert file_row[2] == md5
+        return file_row[0], file_row[6]
 
-        gpx2spatialite.enterwaypoints(self.cursor, file_row[6],
-                                      extracted_wpts[4], file_row[0])
+    def test_entertrackpoints(self):
+        extracted_pts = gpx2spatialite.extractpoints(self.test_path,
+                                                     self.cursor,
+                                                     True, False)
 
-        sql = "select * from waypoints"
+        fileid, userid = self.get_file_and_user()
+        gpx2spatialite.enterpoints(self.cursor, userid,
+                                   extracted_pts[0], fileid)
+
+        sql = "select *, astext(geom) from trackpoints"
         res = self.cursor.execute(sql)
+        trkpt_rows = res.fetchall()
+
+        assert len(trkpt_rows) == 4
+
+        assert trkpt_rows[1][0] == 2
+        assert trkpt_rows[1][1] == 3
+        assert trkpt_rows[1][2] == 1
+        assert trkpt_rows[1][3] == 65.51
+        assert trkpt_rows[1][4] == "2012-03-17 12:46:44"
+        assert trkpt_rows[1][5] is None
+        assert trkpt_rows[1][6] == -77.136226
+        assert trkpt_rows[1][7] == 0.259244
+        assert trkpt_rows[1][8] == 1
+        assert trkpt_rows[1][9] == 1
+        assert trkpt_rows[1][10] is None
+        assert trkpt_rows[1][12] == "POINT(13.45717 52.511357)"
+
+    def test_entertracklines(self):
+        extracted_pts = gpx2spatialite.extractpoints(self.test_path,
+                                                     self.cursor,
+                                                     True, False)
+
+        fileid, userid = self.get_file_and_user()
+        gpx2spatialite.enterlines(self.cursor, userid,
+                                  extracted_pts[1], fileid)
+
+        sql = "select *, astext(geom) from tracklines"
+        res = self.cursor.execute(sql)
+        trklines_rows = res.fetchall()
+
+        assert len(trklines_rows) == 1
+
+        assert trklines_rows[0][0] == 1
+        assert trklines_rows[0][1] == 4
+        assert trklines_rows[0][2] is None
+        assert trklines_rows[0][3] == "2012-03-17 12:46:19"
+        assert trklines_rows[0][4] == "2012-03-17 12:47:23"
+        assert trklines_rows[0][5] == 56.775777
+        assert trklines_rows[0][6] == 64.0
+        assert trklines_rows[0][7] == 3.193637
+        assert trklines_rows[0][8] == 1
+        assert trklines_rows[0][9] == 1
+
+    def test_enterwaypoints(self):
+        extracted_wpts = gpx2spatialite.extractpoints(self.test_path,
+                                                      self.cursor,
+                                                      True, False)
+
+        fileid, userid = self.get_file_and_user()
+
+        gpx2spatialite.enterwaypoints(self.cursor, userid,
+                                      extracted_wpts[4], fileid)
+
+        sql = "select *, astext(geom) from waypoints"
+        res = self.cursor.execute(sql)
+        wpt_row = res.fetchone()
+
+        assert wpt_row[0] == 1
+        assert wpt_row[1] == "001"
+        assert wpt_row[2] == 195.0
+        assert wpt_row[3] == "2012-03-21 21:24:43"
+        assert wpt_row[4] == "Flag, Blue"
+        assert wpt_row[5] == 1
+        assert wpt_row[6] == 1
+        assert wpt_row[7] is None
+        assert wpt_row[9] == "POINT(-121.17042 37.085751)"
