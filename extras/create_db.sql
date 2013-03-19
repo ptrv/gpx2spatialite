@@ -19,8 +19,8 @@ file_uid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 filename TEXT NOT NULL,
 md5hash TEXT NOT NULL,
 date_entered TEXT NOT NULL,
-first_timestamp TEXT NOT NULL,
-last_timestamp TEXT NOT NULL,
+first_timestamp TEXT,
+last_timestamp TEXT,
 user_uid INTEGER NOT NULL,
 FOREIGN KEY (user_uid)
 REFERENCES users (user_uid),
@@ -48,7 +48,7 @@ FOREIGN KEY (citydef_uid)
 REFERENCES citydefs (citydef_uid),
 UNIQUE (utctimestamp, user_uid));
 
-SELECT AddGeometryColumn('trackpoints', 'geom', 4326, 'POINT', 'XY');
+SELECT AddGeometryColumn('trackpoints', 'geom', 4326, 'POINT', 'XY', 1);
 SELECT CreateSpatialIndex('trackpoints', 'geom');
 
 CREATE TABLE tracklines (
@@ -71,7 +71,7 @@ REFERENCES tracksegments (trkseg_uid) ON DELETE CASCADE ON UPDATE CASCADE,
 UNIQUE (timestamp_start, user_uid, trkseg_id)
 );
 
-SELECT AddGeometryColumn('tracklines', 'geom', 4326, 'LINESTRING', 'XY');
+SELECT AddGeometryColumn('tracklines', 'geom', 4326, 'LINESTRING', 'XY', 1);
 SELECT CreateSpatialIndex('tracklines', 'geom');
 
 CREATE TABLE citydefs (
@@ -81,7 +81,7 @@ country TEXT NOT NULL,
 UNIQUE(city, country)
 );
 
-SELECT AddGeometryColumn('citydefs', 'geom', 4326, 'POLYGON', 'XY');
+SELECT AddGeometryColumn('citydefs', 'geom', 4326, 'POLYGON', 'XY', 1);
 SELECT CreateSpatialIndex('citydefs', 'geom');
 
 CREATE TABLE tracksegments (
@@ -106,7 +106,7 @@ REFERENCES users (user_uid) ON DELETE CASCADE ON UPDATE CASCADE,
 FOREIGN KEY (citydef_uid)
 REFERENCES citydefs (citydef_uid));
 
-SELECT AddGeometryColumn('waypoints', 'geom', 4326, 'POINT', 'XY');
+SELECT AddGeometryColumn('waypoints', 'geom', 4326, 'POINT', 'XY', 1);
 SELECT CreateSpatialIndex('waypoints', 'geom');
 
 COMMIT;
