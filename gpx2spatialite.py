@@ -63,7 +63,7 @@ def parseargs():
     """
     parse command line arguments and define options etc
     """
-    usage = "usage: %prog [options] <username> /path/to/gpx/file.gpx"
+    usage = "usage: %prog [options] <username> /path/to/gpx/file.gpx or /path/to/folder"
     optparser = OptionParser(usage, version="%prog 0.4")
     optparser.add_option("-d",
                          "--database",
@@ -567,6 +567,48 @@ def checkadd(username):
             print "Please answer y or n"
 
 
+def read_filepaths_from_directory(rootdir, fileextension):
+    """
+    Returns a list of file paths recursively read starting at the given root directory.
+    Files will be filtered by the given file extension.
+    File names are handled case-insensitive.
+    """
+    if not isinstance(fileextension, str):
+        raise Exception("Second parameter must be of type str.")
+
+    paths = []
+    for rootfolder, subfolders, files in os.walk(rootdir):
+        filtered_files = [f for f in files if f.lower().endswith(fileextension)]
+        for filename in filtered_files:
+            filepath = glob.glob(os.path.join(rootfolder, filename))
+            if isinstance(filepath, str):
+                paths.append(filepath)
+            if isinstance(filepath, list):
+                paths += filepath
+    return paths
+
+
+def read_filepaths(resource_paths, fileextension):
+    """
+    Returns a list of file paths read from the given resource paths.
+    A resource can be a file or a folder.
+    Files will be filtered by the given file extension.
+    File names are handled case-insensitive.
+    """
+    if not isinstance(resource_paths, list):
+        raise Exception("First parameter must be of type list.")
+
+    paths = []
+    for resource_path in resource_paths:
+        if os.path.isdir(resource_path) is True:
+            filepaths = read_filepaths_from_directory(resource_path, fileextension)
+            paths += filepaths
+        if os.path.isfile(resource_path) is True:
+            if resource_path.lower().endswith(fileextension):
+                paths.append(glob.glob(resource_path))
+    return paths
+
+
 def main():
     """
     you know what 'main' does - run everything in the right order and
@@ -576,6 +618,9 @@ def main():
     starttime = datetime.now()
 
     filepaths, username, dbpath, skip_locs, update_locs = parseargs()
+
+    gpx_filepaths = read_filepaths(filepaths, ".gpx")
+    print "\nFound %i .gpx files.\n" % len(gpx_filepaths)
 
     conn = spatialite.connect(dbpath)
     cursor = conn.cursor()
@@ -597,21 +642,11 @@ def main():
             conn.close()
             sys.exit(0)
 
-    new_filepaths = []
-    for filepath in filepaths:
-        if os.path.isdir(filepath) is True:
-            for gpxfile in glob.glob(os.path.join(filepath, "*.gpx")):
-                if check_if_gpxfile_exists(cursor, gpxfile) is True:
-                    print "File %s already in database" % gpxfile
-                else:
-                    new_filepaths.append(gpxfile)
-        else:
-            if check_if_gpxfile_exists(cursor, filepath) is True:
-                print "File %s already in database" % filepath
-            else:
-                new_filepaths.append(filepath)
+    for filepath in gpx_filepaths:
+        if check_if_gpxfile_exists(cursor, filepath) is True:
+            print "File %s already in database" % filepath
+            continue
 
-    for filepath in new_filepaths:
         parsing_starttimep = datetime.now()
         print "#" * 48
         print "Parsing points in %s" % filepath
