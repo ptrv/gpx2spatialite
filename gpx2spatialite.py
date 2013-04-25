@@ -10,15 +10,15 @@ Copyright 2013 Daniel Belasco Rogers <http://planbperformance.net/dan>
                Peter Vasil <mail@petervasil.net>
 
 To create a suitable database:
-In spatialite-gui, click on 'Create a&New (empty)SQLite DB' (second tool
-item)
+In spatialite-gui, click on 'Create a New (empty) SQLite DB' (second tool
+item).
 
 To prepare the tables needed for this script (populating the users table
-with 'Daniel' and 'Sophia'), run the sql file extras/create_db.sql (i.e.
-open it in spatialite-gui with 'Execute SQL script'())
+with a username, run the SQL file extras/create_db.sql (i.e.
+open it in spatialite-gui with 'Execute SQL script'()).
 
-The script extras/drop_db.sql could be usefule too - it drops all the
-tables in the database so you can start again
+The script extras/drop_db.sql could be useful too - it drops all the
+tables in the database so you can start from scratch.
 """
 
 # standard imports
