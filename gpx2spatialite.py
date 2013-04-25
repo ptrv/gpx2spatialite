@@ -365,7 +365,12 @@ def extractpoints(filepath, cursor, skip_locs, skip_wpts):
     trkpts = []
     wpts = []
 
-    gpx = gpxpy.parse(open(filepath))
+    file = open(filepath)
+    try:
+        gpx = gpxpy.parse(file)
+    except Exception as e:
+        print "GPXException (%r) for %s: %s." % (type(e), filepath, e)
+        return trkpts, trklines, 0, 0, wpts
 
     firsttimestamp, lasttimestamp = gpx.get_time_bounds()
 
@@ -617,6 +622,10 @@ def main():
         dbg_str = "File first timestamp: %s, " % firsttimestamp
         dbg_str += "last timestamp: %s" % lasttimestamp
         print dbg_str
+
+        if firsttimestamp == 0 or lasttimestamp == 0:
+            continue
+            print "Skipping importing %s." % filepath
 
         parsing_endtime = datetime.now()
         dbg_str = "\nParsing %d points and %d waypoints " % (len(trkpts),
