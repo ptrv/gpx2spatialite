@@ -1,5 +1,6 @@
 import gpx2spatialite
 import os.path
+import tempfile
 from subprocess import call
 from datetime import datetime
 try:
@@ -20,6 +21,40 @@ from pyspatialite import dbapi2 as spatialite
 def set_gpx_path(request):
     # set member variable in test class
     request.cls.test_path = os.path.abspath("tests/data/file.gpx")
+
+
+@pytest.fixture(scope="class")
+def setup_dummy_files(request):
+
+    # dir_path = "tests/data/gpx"
+    # request.cls.test_dir = os.path.abspath(dir_path)
+
+    directory_name = tempfile.mkdtemp()
+    request.cls.test_dir = directory_name
+
+    tmp1 = tempfile.NamedTemporaryFile(suffix=".gpx",
+                                       prefix="file1_",
+                                       dir=directory_name)
+    tmp2 = tempfile.NamedTemporaryFile(suffix=".gpx",
+                                       prefix="file2_",
+                                       dir=directory_name)
+    tmp3 = tempfile.NamedTemporaryFile(suffix=".xml",
+                                       prefix="file1_",
+                                       dir=directory_name)
+
+    request.cls.tmp_file1 = tmp1.name
+    request.cls.tmp_file2 = tmp2.name
+    request.cls.tmp_file3 = tmp3.name
+
+    # remove test dir and files
+    def cleanup():
+        tmp1.close()
+        tmp2.close()
+        tmp3.close()
+        os.removedirs(directory_name)
+
+    # run cleanup function after tests finished
+    request.addfinalizer(cleanup)
 
 
 @pytest.fixture(scope="class")
@@ -73,7 +108,44 @@ def setup_db(request):
 
 @pytest.mark.usefixtures("set_gpx_path")
 @pytest.mark.usefixtures("setup_db")
+@pytest.mark.usefixtures("setup_dummy_files")
 class TestGpx2Spatialite:
+
+    def test_read_filepaths_and_dirs(self):
+        expected = [self.test_path]
+        actual = gpx2spatialite.read_filepaths(expected, ".gpx")
+        assert expected == actual
+
+        expected = [self.tmp_file1]
+        actual = gpx2spatialite.read_filepaths(expected, ".gpx")
+        assert expected == actual
+
+        expected = [self.tmp_file1, self.tmp_file2]
+        actual = gpx2spatialite.read_filepaths(expected, ".gpx")
+        assert expected == actual
+
+        expected_reversed = expected[::-1]
+        expected = expected_reversed
+        actual = gpx2spatialite.read_filepaths([self.test_dir], ".gpx")
+        assert expected == actual
+
+        input_path = ["{0}/file*.gpx".format(self.test_dir)]
+        actual = gpx2spatialite.read_filepaths(input_path, ".gpx")
+        assert expected == actual
+
+        expected = expected_reversed
+        input_path = ["{0}/*.gpx".format(self.test_dir)]
+        actual = gpx2spatialite.read_filepaths(input_path, ".gpx")
+        assert expected == actual
+
+        expected = expected_reversed
+        input_path = ["{0}/*".format(self.test_dir)]
+        actual = gpx2spatialite.read_filepaths(input_path, ".gpx")
+        assert expected == actual
+
+        input_path = ["foo".format(self.test_dir)]
+        actual = gpx2spatialite.read_filepaths(input_path, ".gpx")
+        assert [] == actual
 
     def test_checkfile(self):
         assert gpx2spatialite.checkfile(self.test_path)

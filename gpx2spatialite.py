@@ -63,7 +63,8 @@ def parseargs():
     """
     parse command line arguments and define options etc
     """
-    usage = "usage: %prog [options] <username> /path/to/gpx/file.gpx or /path/to/folder"
+    usage = "usage: %prog [options] <username> /path/to/gpx/file.gpx"\
+            "or /path/to/folder"
     optparser = OptionParser(usage, version="%prog 0.4")
     optparser.add_option("-d",
                          "--database",
@@ -569,8 +570,8 @@ def checkadd(username):
 
 def read_filepaths_from_directory(rootdir, fileextension):
     """
-    Returns a list of file paths recursively read starting at the given root directory.
-    Files will be filtered by the given file extension.
+    Returns a list of file paths recursively read starting at the given
+    root directory. Files will be filtered by the given file extension.
     File names are handled case-insensitive.
     """
     if not isinstance(fileextension, str):
@@ -578,7 +579,8 @@ def read_filepaths_from_directory(rootdir, fileextension):
 
     paths = []
     for rootfolder, subfolders, files in os.walk(rootdir):
-        filtered_files = [f for f in files if f.lower().endswith(fileextension)]
+        filtered_files = [f for f in files if f.lower().endswith(
+            fileextension)]
         for filename in filtered_files:
             filepath = glob.glob(os.path.join(rootfolder, filename))
             if isinstance(filepath, str):
@@ -601,11 +603,16 @@ def read_filepaths(resource_paths, fileextension):
     paths = []
     for resource_path in resource_paths:
         if os.path.isdir(resource_path) is True:
-            filepaths = read_filepaths_from_directory(resource_path, fileextension)
-            paths += filepaths
-        if os.path.isfile(resource_path) is True:
+            filepaths = read_filepaths_from_directory(resource_path,
+                                                      fileextension)
+            paths.extend(filepaths)
+        elif os.path.isfile(resource_path) is True:
             if resource_path.lower().endswith(fileextension):
-                paths.append(glob.glob(resource_path))
+                paths.append(resource_path)
+        else:
+            for fi in glob.glob(resource_path):
+                if fi.lower().endswith(fileextension):
+                    paths.append(fi)
     return paths
 
 
