@@ -626,15 +626,15 @@ def main():
 
     filepaths, username, dbpath, skip_locs, update_locs = parseargs()
 
-    gpx_filepaths = read_filepaths(filepaths, ".gpx")
-    print "\nFound %i .gpx files.\n" % len(gpx_filepaths)
-
     conn = spatialite.connect(dbpath)
     cursor = conn.cursor()
 
     if update_locs is True:
         update_locations(conn)
         sys.exit(0)
+
+    gpx_filepaths = read_filepaths(filepaths, ".gpx")
+    print "\nFound %i .gpx files.\n" % len(gpx_filepaths)
 
     userid = get_user_id(cursor, username)
     if userid == -1:

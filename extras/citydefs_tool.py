@@ -49,7 +49,7 @@ def export_citydefs(cursor, out_file):
     Export citydefs from database to a sql insert script.
     """
     sql = "SELECT citydef_uid, city, country, AsText(geom) "
-    sql += "FROM citydefs ORDER BY citydef_uid"
+    sql += "FROM citydefs ORDER BY country, city"
     cursor.execute(sql)
 
     out_file.write("BEGIN TRANSACTION;\n")
