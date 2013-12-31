@@ -122,26 +122,22 @@ class TestGpx2Spatialite:
 
         expected = [self.tmp_file1, self.tmp_file2]
         actual = gpx2spatialite.read_filepaths(expected, ".gpx")
-        assert expected == actual
+        assert sorted(expected) == sorted(actual)
 
-        expected_reversed = expected[::-1]
-        expected = expected_reversed
         actual = gpx2spatialite.read_filepaths([self.test_dir], ".gpx")
-        assert expected == actual
+        assert sorted(expected) == sorted(actual)
 
         input_path = ["{0}/file*.gpx".format(self.test_dir)]
         actual = gpx2spatialite.read_filepaths(input_path, ".gpx")
-        assert expected == actual
+        assert sorted(expected) == sorted(actual)
 
-        expected = expected_reversed
         input_path = ["{0}/*.gpx".format(self.test_dir)]
         actual = gpx2spatialite.read_filepaths(input_path, ".gpx")
-        assert expected == actual
+        assert sorted(expected) == sorted(actual)
 
-        expected = expected_reversed
         input_path = ["{0}/*".format(self.test_dir)]
         actual = gpx2spatialite.read_filepaths(input_path, ".gpx")
-        assert expected == actual
+        assert sorted(expected) == sorted(actual)
 
         input_path = ["foo".format(self.test_dir)]
         actual = gpx2spatialite.read_filepaths(input_path, ".gpx")
