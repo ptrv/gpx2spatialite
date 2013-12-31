@@ -29,8 +29,7 @@ import hashlib
 from datetime import datetime
 from optparse import OptionParser
 from math import radians, atan2, sin, cos, degrees
-# these might need installing
-from pyspatialite import dbapi2 as spatialite
+import sqlite3
 try:
     import gpxpy
     import gpxpy.gpx
@@ -181,7 +180,7 @@ def enterfile(filepath, cursor, user, firsttimestamp, lasttimestamp):
     # entered
     try:
         cursor.execute(sql)
-    except spatialite.IntegrityError as err:
+    except sqlite3.IntegrityError as err:
         print "*" * 43
         print "File already entered. Please try again"
         print err
@@ -261,7 +260,7 @@ def enterpoints(cursor, user, trkpts, file_uid):
                                                geom)
         try:
             cursor.execute(sql)
-        except spatialite.IntegrityError as err:
+        except sqlite3.IntegrityError as err:
             print "Not importing duplicate point from %s: %s" % (time, err)
 
 
@@ -626,7 +625,9 @@ def main():
 
     filepaths, username, dbpath, skip_locs, update_locs = parseargs()
 
-    conn = spatialite.connect(dbpath)
+    conn = sqlite3.connect(dbpath)
+    conn.enable_load_extension(True)
+    conn.execute('SELECT load_extension("libspatialite")')
     cursor = conn.cursor()
 
     if update_locs is True:

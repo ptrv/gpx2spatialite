@@ -14,7 +14,7 @@ except ImportError:
     print 'Or install manually from here '\
         'https://pypi.python.org/pypi/pytest/2.3.4'
     print 48 * "*"
-from pyspatialite import dbapi2 as spatialite
+import sqlite3
 
 
 @pytest.fixture(scope="class")
@@ -68,7 +68,9 @@ def setup_db(request):
         # create database
         call(create_cmd)
 
-    conn = spatialite.connect(db_path)
+    conn = sqlite3.connect(db_path)
+    conn.enable_load_extension(True)
+    conn.execute('SELECT load_extension("libspatialite")')
     cursor = conn.cursor()
 
     # cursor.execute("savepoint test")
