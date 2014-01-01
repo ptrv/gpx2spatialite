@@ -234,8 +234,8 @@ class TestGpx2Spatialite:
         assert trkpt_rows[1][3] == 65.51
         assert trkpt_rows[1][4] == "2012-03-17 12:46:44"
         assert trkpt_rows[1][5] is None
-        assert trkpt_rows[1][6] == -77.136226
-        assert trkpt_rows[1][7] == 0.259244
+        assert trkpt_rows[1][6] == -77.1362263931
+        assert trkpt_rows[1][7] == 0.259243898451
         assert trkpt_rows[1][8] == 1
         assert trkpt_rows[1][9] == 1
         assert trkpt_rows[1][10] is None
@@ -261,9 +261,9 @@ class TestGpx2Spatialite:
         assert trklines_rows[0][2] is None
         assert trklines_rows[0][3] == "2012-03-17 12:46:19"
         assert trklines_rows[0][4] == "2012-03-17 12:47:23"
-        assert trklines_rows[0][5] == 56.775777
+        assert trklines_rows[0][5] == 56.7757773278
         assert trklines_rows[0][6] == 64.0
-        assert trklines_rows[0][7] == 3.193637
+        assert trklines_rows[0][7] == 3.19363747469
         assert trklines_rows[0][8] == 1
         assert trklines_rows[0][9] == 1
 
@@ -283,7 +283,7 @@ class TestGpx2Spatialite:
 
         assert wpt_row[0] == 1
         assert wpt_row[1] == "001"
-        assert wpt_row[2] == 195.0
+        assert wpt_row[2] == 195.440933
         assert wpt_row[3] == "2012-03-21 21:24:43"
         assert wpt_row[4] == "Flag, Blue"
         assert wpt_row[5] == 1

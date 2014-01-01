@@ -45,47 +45,47 @@ def main():
         sys.exit(0)
 
     gpx_filepaths = g2s.read_filepaths(filepaths, ".gpx")
-    print "\nFound %i .gpx files.\n" % len(gpx_filepaths)
+    print("\nFound {0} .gpx files.\n".format(len(gpx_filepaths)))
 
     userid = g2s.get_user_id(cursor, username)
     if userid == -1:
         # user name is not in database - ask to add
         if g2s.checkadd(username):
-            print "User %s sucessfully added to database" % username
+            print("User {0} sucessfully added to database".format(username))
             userid = g2s.insert_user(cursor, username)
             conn.commit()
         else:
-            print "Please run again specifying a known user:"
+            print("Please run again specifying a known user:")
             cursor.close()
             conn.close()
             sys.exit(0)
 
     for filepath in gpx_filepaths:
         if g2s.check_if_gpxfile_exists(cursor, filepath) is True:
-            print "File %s already in database" % filepath
+            print("File {0} already in database".format(filepath))
             continue
 
         parsing_starttimep = datetime.now()
-        print "#" * 48
-        print "Parsing points in %s" % filepath
+        print("#" * 48)
+        print("Parsing points in {0}".format(filepath))
         trkpts, trklines, firsttimestamp, lasttimestamp, wpts = g2s.extractpoints(
             filepath, cursor, skip_locs, False
         )
 
-        dbg_str = "File first timestamp: %s, " % firsttimestamp
-        dbg_str += "last timestamp: %s" % lasttimestamp
-        print dbg_str
+        dbg_str = "File first timestamp: {0}, ".format(firsttimestamp)
+        dbg_str += "last timestamp: {0}".format(lasttimestamp)
+        print(dbg_str)
 
         if firsttimestamp == 0 or lasttimestamp == 0:
             continue
-            print "Skipping importing %s." % filepath
+            print("Skipping importing {0}.".format(filepath))
 
         parsing_endtime = datetime.now()
-        dbg_str = "\nParsing %d points and %d waypoints " % (len(trkpts),
-                                                             len(wpts))
-        dbg_str += "from gpx file took %s" % (parsing_endtime -
-                                              parsing_starttimep)
-        print dbg_str
+        dbg_str = "\nParsing %d points and {0} waypoints ".format(len(trkpts),
+                                                                  len(wpts))
+        dbg_str += "from gpx file took {0}".format(parsing_endtime -
+                                                   parsing_starttimep)
+        print(dbg_str)
 
         db_starttime = datetime.now()
         # print "Entering file into database"
@@ -105,14 +105,15 @@ def main():
         conn.commit()
 
         db_endtime = datetime.now()
-        print "Entering into database took %s" % (db_endtime - db_starttime)
+        print("Entering into database took {0}".format(db_endtime -
+                                                       db_starttime))
 
     cursor.close()
     conn.close()
 
     endtime = datetime.now()
-    print "#" * 48
-    print "Script took %s\n" % (endtime - starttime)
+    print("#" * 48)
+    print("Script took {0}\n".format(endtime - starttime))
 
 if __name__ == '__main__':
     sys.exit(main())

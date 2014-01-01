@@ -67,7 +67,7 @@ e.g. python gpx2spatialite <username> </path/to/gpxfile.gpx>
     filepaths = args[1:]
     for f in filepaths:
         if checkfile(f) is False:
-            print "%s is not a file or directory" % f
+            print("{0} is not a file or directory".format(f))
             sys.exit(2)
 
     skip_locs = options.skip_locs
@@ -81,7 +81,8 @@ def checkadd(username):
     should be added
     """
     while 1:
-        question = 'Do you want to add %s as a new user? y or n ' % username
+        question = ('Do you want to add {0} as a new user? y or n '
+                    .format(username))
         answer = raw_input(question)
         answer = answer.lower()
         if answer in ('y', 'yes'):
@@ -89,7 +90,7 @@ def checkadd(username):
         if answer in ('n', 'no'):
             return False
         else:
-            print "Please answer y or n"
+            print("Please answer y or n")
 
 
 def read_filepaths_from_directory(rootdir, fileextension):
