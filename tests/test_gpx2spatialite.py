@@ -60,7 +60,7 @@ def setup_dummy_files(request):
 def setup_db(request):
     db_path = os.path.abspath("tests/data/db.sqlite")
     if not os.path.isfile(db_path):
-        create_db_script = os.path.abspath("extras/create_db.sql")
+        create_db_script = gpx2spatialite.get_data("sql/create_db.sql")
         spatialite_cmd_str = ".read %s utf-8" % create_db_script
         create_cmd = ["spatialite", db_path, spatialite_cmd_str]
 
