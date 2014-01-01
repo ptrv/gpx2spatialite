@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+#-*- coding:utf-8 -*-
+
+import sys
+from optparse import OptionParser
+from subprocess import call
+import gpx2spatialite as g2s
+
+
+def parseargs():
+    usage = "usage: %prog /path/to/new/database.sqlite"
+    optparser = OptionParser(usage, version="%prog 0.1")
+    (_, args) = optparser.parse_args()
+    if len(args) != 1:
+        error = "Specify the new database path"
+        optparser.error(error)
+        sys.exit(2)
+
+    return args[0]
+
+
+def main():
+    new_db = parseargs()
+
+    create_db_script = g2s.get_data("sql/create_db.sql")
+    insert_citydefs_script = g2s.get_data("sql/insert_citydefs.sql")
+
+    create_db_cmd_str = ".read {0} utf-8".format(create_db_script)
+    insert_citydefs_cmd_str = ".read {0} utf-8".format(insert_citydefs_script)
+
+    create_db_cmd = ['spatialite', new_db, create_db_cmd_str]
+    call(create_db_cmd)
+
+    insert_citydefs_cmd = ['spatialite', new_db, insert_citydefs_cmd_str]
+    call(insert_citydefs_cmd)
+
+
+if __name__ == '__main__':
+    sys.exit(main())

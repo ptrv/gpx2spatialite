@@ -5,7 +5,11 @@ import os.path
 import sys
 import re
 from optparse import OptionParser
-from pyspatialite import dbapi2 as spatialite
+try:
+    from pyspatialite import dbapi2 as spatialite
+except ImportError:
+    print("Please install pyspatialite")
+    sys.exit(2)
 
 
 def parseargs():
