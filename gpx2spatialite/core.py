@@ -3,11 +3,7 @@ import os.path
 import hashlib
 from datetime import datetime
 from math import radians, atan2, sin, cos, degrees
-try:
-    from pyspatialite import dbapi2 as spatialite
-except ImportError:
-    print('Please install pyspatialite')
-    sys.exit(2)
+from spatialite_finder import spatialite
 try:
     import gpxpy
     import gpxpy.gpx

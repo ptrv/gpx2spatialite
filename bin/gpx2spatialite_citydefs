@@ -5,11 +5,8 @@ import os.path
 import sys
 import re
 from optparse import OptionParser
-try:
-    from pyspatialite import dbapi2 as spatialite
-except ImportError:
-    print("Please install pyspatialite")
-    sys.exit(2)
+import gpx2spatialite
+from gpx2spatialite import spatialite
 
 
 def parseargs():
@@ -84,7 +81,7 @@ def main():
 
     is_export, is_import, dbpath, filepath = parseargs()
 
-    conn = spatialite.connect(dbpath)
+    conn = gpx2spatialite.get_connection(dbpath)
     cursor = conn.cursor()
 
     if is_export:

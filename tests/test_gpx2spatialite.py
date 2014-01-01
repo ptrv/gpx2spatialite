@@ -14,7 +14,6 @@ except ImportError:
     print 'Or install manually from here '\
         'https://pypi.python.org/pypi/pytest/2.3.4'
     print 48 * "*"
-from pyspatialite import dbapi2 as spatialite
 
 
 @pytest.fixture(scope="class")
@@ -68,7 +67,7 @@ def setup_db(request):
         # create database
         call(create_cmd)
 
-    conn = spatialite.connect(db_path)
+    conn = gpx2spatialite.get_connection(db_path)
     cursor = conn.cursor()
 
     # cursor.execute("savepoint test")

@@ -24,11 +24,6 @@ tables in the database so you can start from scratch.
 # standard imports
 import sys
 from datetime import datetime
-try:
-    from pyspatialite import dbapi2 as spatialite
-except ImportError:
-    print("Please install pyspatialite")
-    sys.exit(2)
 import gpx2spatialite as g2s
 
 
@@ -42,7 +37,7 @@ def main():
 
     filepaths, username, dbpath, skip_locs, update_locs = g2s.parseargs()
 
-    conn = spatialite.connect(dbpath)
+    conn = g2s.get_connection(dbpath)
     cursor = conn.cursor()
 
     if update_locs is True:
