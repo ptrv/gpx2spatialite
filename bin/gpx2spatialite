@@ -81,8 +81,8 @@ def main():
             print("Skipping importing {0}.".format(filepath))
 
         parsing_endtime = datetime.now()
-        dbg_str = "\nParsing %d points and {0} waypoints ".format(len(trkpts),
-                                                                  len(wpts))
+        dbg_str = "\nParsing {0} points and {1} waypoints ".format(len(trkpts),
+                                                                   len(wpts))
         dbg_str += "from gpx file took {0}".format(parsing_endtime -
                                                    parsing_starttimep)
         print(dbg_str)
