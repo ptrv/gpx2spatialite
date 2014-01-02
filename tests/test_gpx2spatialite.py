@@ -6,14 +6,14 @@ from datetime import datetime
 try:
     import pytest
 except ImportError:
-    print 48 * "*"
-    print "Please install 'pytest' module"
-    print
-    print 'You can get it by typing:'
-    print 'sudo easy_install pytest'
-    print 'Or install manually from here '\
-        'https://pypi.python.org/pypi/pytest/2.3.4'
-    print 48 * "*"
+    print(48 * "*")
+    print("Please install 'pytest' module")
+    print('')
+    print('You can get it by typing:')
+    print('sudo easy_install pytest')
+    print('Or install manually from here '
+          'https://pypi.python.org/pypi/pytest/2.3.4')
+    print(48 * "*")
 
 
 @pytest.fixture(scope="class")
