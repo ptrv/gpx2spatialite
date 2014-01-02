@@ -3,7 +3,7 @@ import os.path
 import hashlib
 from datetime import datetime
 from math import radians, atan2, sin, cos, degrees
-from spatialite_finder import spatialite
+from .spatialite_finder import spatialite
 try:
     import gpxpy
     import gpxpy.gpx
