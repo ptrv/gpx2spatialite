@@ -28,6 +28,6 @@ def get_connection(db_path):
     if LOAD_AS_EXTENSION:
         # print('spatialite loaded as sqlite extension')
         connection.enable_load_extension(True)
-        connection.execute('SELECT load_extension("libspatialite")')
+        connection.execute('SELECT load_extension("libspatialite.so")')
 
     return connection
