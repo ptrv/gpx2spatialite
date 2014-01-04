@@ -16,43 +16,85 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
 
-# TODO Add option to load custom citydefs.sql
-
 
 import sys
 from optparse import OptionParser
 import gpx2spatialite as g2s
+from gpx2spatialite import spatialite
 
 
 def parseargs():
-    usage = "usage: %prog /path/to/new/database.sqlite"
+    usage = "usage: %prog [options] /path/to/new/database.sqlite"
     optparser = OptionParser(usage, version="%prog 0.1")
-    (_, args) = optparser.parse_args()
+    optparser.add_option('-c',
+                         '--custom-citydefs',
+                         dest='custom_citydefs',
+                         metavar='SQL-SCRIPT',
+                         help='Set the citydefs sql file.')
+    optparser.add_option('-n',
+                         '--no-citydefs',
+                         dest='no_citydefs',
+                         action='store_true',
+                         default=False,
+                         help='Do not run the citydefs insert script.')
+    optparser.add_option('-e',
+                         '--execute-script',
+                         dest='execute_script',
+                         metavar='SQL-SCRIPT',
+                         help='Set an SQL script to run.')
+    (options, args) = optparser.parse_args()
     if len(args) != 1:
         error = "Specify the new database path"
         optparser.error(error)
         sys.exit(2)
 
-    return args[0]
+    return (args[0],
+            options.custom_citydefs,
+            options.no_citydefs,
+            options.execute_script)
 
 
 def main():
-    new_db = parseargs()
+    new_db, custom_citydefs, no_citydefs, exec_script = parseargs()
 
     g2s.create_new_db(new_db)
 
-    insert_citydefs_script = g2s.get_data("sql/insert_citydefs.sql")
+    def close_db():
+        cursor.close()
+        conn.close()
 
     conn = g2s.get_connection(new_db)
     cursor = conn.cursor()
 
-    insert_citydefs_query = open(insert_citydefs_script, 'r').read()
-    cursor.executescript(insert_citydefs_query)
-    conn.commit()
+    def print_file_not_exists(file_name):
+        print("'{0}' does not exist".format(file_name))
 
-    cursor.close()
-    conn.close()
+    if no_citydefs is False:
+        if custom_citydefs is None:
+            insert_citydefs_script = g2s.get_data("sql/insert_citydefs.sql")
+        else:
+            insert_citydefs_script = custom_citydefs
 
+        try:
+            insert_citydefs_query = open(insert_citydefs_script, 'r').read()
+            cursor.executescript(insert_citydefs_query)
+            conn.commit()
+        except IOError:
+            print_file_not_exists(insert_citydefs_script)
+        except spatialite.OperationalError, err:
+            print("SQL Error: " + str(err))
+
+    if exec_script is not None:
+        try:
+            custom_script = open(exec_script, 'r').read()
+            cursor.executescript(custom_script)
+            conn.commit()
+        except IOError:
+            print_file_not_exists(exec_script)
+        except spatialite.OperationalError, err:
+            print("SQL Error: " + str(err))
+
+    close_db()
 
 if __name__ == '__main__':
     sys.exit(main())
