@@ -1,5 +1,5 @@
-from spatialite_finder import get_connection
-from __init__ import get_data
+from .spatialite_finder import get_connection
+from .__init__ import get_data
 
 
 def create_new_db(db_path):
