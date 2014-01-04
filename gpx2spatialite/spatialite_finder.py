@@ -31,20 +31,3 @@ def get_connection(db_path):
         connection.execute('SELECT load_extension("libspatialite.so")')
 
     return connection
-
-
-def init_spatial_metadata(connection):
-    cursor = connection.cursor()
-    result = cursor.execute('SELECT spatialite_version()')
-    spatialite_version = result.fetchone()[0]
-
-    def versionstring2list(v):
-        import re
-        return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
-
-    if cmp(versionstring2list(spatialite_version), [4, 1]) == -1:
-        cursor.execute('SELECT InitSpatialMetaData()')
-    else:
-        cursor.execute('SELECT InitSpatialMetaData(1)')
-
-    connection.commit()
