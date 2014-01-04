@@ -60,10 +60,10 @@ def setup_dummy_files(request):
 @pytest.fixture(scope="class")
 def setup_db(request):
     db_path = os.path.abspath("tests/data/db.sqlite")
-    print('deleting old test database')
     if (os.path.isfile(db_path)
         and time.time() - os.path.getmtime(db_path) >
             timedelta(days=1).total_seconds()):
+        print('deleting old test database')
         call(['rm', db_path])
 
     if not os.path.isfile(db_path):
