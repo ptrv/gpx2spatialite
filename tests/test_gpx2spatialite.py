@@ -2,7 +2,8 @@ import gpx2spatialite
 import os.path
 import tempfile
 from subprocess import call
-from datetime import datetime
+from datetime import datetime, timedelta
+import time
 try:
     import pytest
 except ImportError:
@@ -59,6 +60,12 @@ def setup_dummy_files(request):
 @pytest.fixture(scope="class")
 def setup_db(request):
     db_path = os.path.abspath("tests/data/db.sqlite")
+    print('deleting old test database')
+    if (os.path.isfile(db_path)
+        and time.time() - os.path.getmtime(db_path) >
+            timedelta(days=1).total_seconds()):
+        call(['rm', db_path])
+
     if not os.path.isfile(db_path):
         create_db_script = gpx2spatialite.get_data("sql/create_db.sql")
         spatialite_cmd_str = ".read %s utf-8" % create_db_script
