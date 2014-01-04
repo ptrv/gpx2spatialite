@@ -1,27 +1,23 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
-"""
-Started Tue 12 Feb 2013 21:48:02 CET
 
-Using Tomo Krajina's gpx module, import a file record, trackpoints and
-tracklines to a database (SQL for database below)
+# Copyright (C) 2013, 2014  Daniel Belasco Rogers <http://planbperformance.net/dan>,
+#                           Peter Vasil <mail@petervasil.net>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see [http://www.gnu.org/licenses/].
 
-Copyright 2013 Daniel Belasco Rogers <http://planbperformance.net/dan>
-               Peter Vasil <mail@petervasil.net>
 
-To create a suitable database:
-In spatialite-gui, click on 'Create a New (empty) SQLite DB' (second tool
-item).
-
-To prepare the tables needed for this script (populating the users table
-with a username, run the SQL file extras/create_db.sql (i.e.
-open it in spatialite-gui with 'Execute SQL script'()).
-
-The script extras/drop_db.sql could be useful too - it drops all the
-tables in the database so you can start from scratch.
-"""
-
-# standard imports
 import sys
 import os
 from datetime import datetime
