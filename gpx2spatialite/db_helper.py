@@ -23,9 +23,9 @@ def init_spatial_metadata(connection):
     result = cursor.execute('SELECT spatialite_version()')
     spatialite_version = result.fetchone()[0]
 
-    from pkg_resources import parse_version
-    if cmp(parse_version(spatialite_version),
-           parse_version('4.1')) == -1:
+    from distutils.version import LooseVersion
+    if cmp(LooseVersion(spatialite_version),
+           LooseVersion('4.1')) == -1:
         cursor.execute('SELECT InitSpatialMetaData()')
     else:
         cursor.execute('SELECT InitSpatialMetaData(1)')
