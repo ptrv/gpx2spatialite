@@ -3,6 +3,8 @@ try:
 except ImportError:
     from distutils.core import setup, Command
 
+from gpx2spatialite import __version__
+
 
 class PyTest(Command):
     user_options = []
@@ -30,7 +32,7 @@ setup(description='gpx2spatialite',
       url='https://github.com/ptrv/gpx2spatialite',
       download_url='https://github.com/ptrv/gpx2spatialite',
       author_email='https://github.com/ptrv/gpx2spatialite',
-      version='0.5',
+      version=__version__,
       install_requires=['gpxpy'],
       packages=['gpx2spatialite'],
       scripts=['bin/gpx2spatialite',
