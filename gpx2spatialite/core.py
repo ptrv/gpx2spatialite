@@ -3,7 +3,8 @@ import os.path
 import hashlib
 from datetime import datetime
 from math import radians, atan2, sin, cos, degrees
-from .spatialite_finder import spatialite
+from .spatialite_finder import spatialite, init_spatial_metadata, get_connection
+from __init__ import get_data
 try:
     import gpxpy
     import gpxpy.gpx
@@ -451,3 +452,19 @@ def insert_user(cursor, username):
     cursor.execute(sql)
 
     return get_user_id(cursor, username)
+
+
+def create_new_db(db_path):
+    connection = get_connection(db_path)
+    create_db_script = get_data("sql/create_db.sql")
+
+    cursor = connection.cursor()
+
+    init_spatial_metadata(connection)
+
+    create_db_query = open(create_db_script, 'r').read()
+    cursor.executescript(create_db_query)
+    connection.commit()
+
+    cursor.close()
+    connection.close()

@@ -5,7 +5,6 @@
 
 import sys
 from optparse import OptionParser
-import re
 import gpx2spatialite as g2s
 
 
@@ -24,26 +23,12 @@ def parseargs():
 def main():
     new_db = parseargs()
 
-    create_db_script = g2s.get_data("sql/create_db.sql")
+    g2s.create_new_db(new_db)
+
     insert_citydefs_script = g2s.get_data("sql/insert_citydefs.sql")
 
     conn = g2s.get_connection(new_db)
     cursor = conn.cursor()
-
-    result = cursor.execute('SELECT spatialite_version()')
-    spatialite_version = result.fetchone()[0]
-
-    def versionstring2list(v):
-        return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
-
-    if cmp(versionstring2list(spatialite_version), [4, 1]) == -1:
-        cursor.execute('SELECT InitSpatialMetaData()')
-    else:
-        cursor.execute('SELECT InitSpatialMetaData(1)')
-
-    create_db_query = open(create_db_script, 'r').read()
-    cursor.executescript(create_db_query)
-    conn.commit()
 
     insert_citydefs_query = open(insert_citydefs_script, 'r').read()
     cursor.executescript(insert_citydefs_query)

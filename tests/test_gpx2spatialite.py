@@ -67,12 +67,7 @@ def setup_db(request):
         call(['rm', db_path])
 
     if not os.path.isfile(db_path):
-        create_db_script = gpx2spatialite.get_data("sql/create_db.sql")
-        spatialite_cmd_str = ".read %s utf-8" % create_db_script
-        create_cmd = ["spatialite", db_path, spatialite_cmd_str]
-
-        # create database
-        call(create_cmd)
+        gpx2spatialite.create_new_db(db_path)
 
     conn = gpx2spatialite.get_connection(db_path)
     cursor = conn.cursor()
