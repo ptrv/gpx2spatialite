@@ -3,7 +3,7 @@
 
 import sys
 from optparse import OptionParser
-from subprocess import call
+import re
 import gpx2spatialite as g2s
 
 
@@ -25,14 +25,30 @@ def main():
     create_db_script = g2s.get_data("sql/create_db.sql")
     insert_citydefs_script = g2s.get_data("sql/insert_citydefs.sql")
 
-    create_db_cmd_str = ".read {0} utf-8".format(create_db_script)
-    insert_citydefs_cmd_str = ".read {0} utf-8".format(insert_citydefs_script)
+    conn = g2s.get_connection(new_db)
+    cursor = conn.cursor()
 
-    create_db_cmd = ['spatialite', new_db, create_db_cmd_str]
-    call(create_db_cmd)
+    result = cursor.execute('SELECT spatialite_version()')
+    spatialite_version = result.fetchone()[0]
 
-    insert_citydefs_cmd = ['spatialite', new_db, insert_citydefs_cmd_str]
-    call(insert_citydefs_cmd)
+    def versionstring2list(v):
+        return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
+
+    if cmp(versionstring2list(spatialite_version), [4, 1]) == -1:
+        cursor.execute('SELECT InitSpatialMetaData()')
+    else:
+        cursor.execute('SELECT InitSpatialMetaData(1)')
+
+    create_db_query = open(create_db_script, 'r').read()
+    cursor.executescript(create_db_query)
+    conn.commit()
+
+    insert_citydefs_query = open(insert_citydefs_script, 'r').read()
+    cursor.executescript(insert_citydefs_query)
+    conn.commit()
+
+    cursor.close()
+    conn.close()
 
 
 if __name__ == '__main__':
