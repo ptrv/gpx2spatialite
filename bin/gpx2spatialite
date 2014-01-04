@@ -31,7 +31,8 @@ def parseargs():
     """
     usage = "usage: %prog [options] -d <database> -u <username> "\
             "/path/to/gpx-file.gpx or /path/to/folder"
-    optparser = OptionParser(usage, version=g2s.__version__)
+    optparser = OptionParser(usage,
+                             version="%prog {0}".format(g2s.__version__))
     optparser.add_option("-d",
                          "--database",
                          dest="dbasepath",
