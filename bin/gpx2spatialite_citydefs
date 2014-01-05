@@ -51,7 +51,7 @@ def parseargs():
     dbpath = os.path.expanduser(args[0])
 
     if options.import_citydefs is None and options.export_citydefs is None:
-        error = "Mandatory option is missing. Please select option -e or -i!"
+        error = "Mandatory option is missing. Please set -e or -i!"
         optparser.error(error)
 
     return dbpath, options.export_citydefs, options.import_citydefs
