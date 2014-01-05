@@ -7,10 +7,14 @@ from gpx2spatialite import __version__
 
 
 class PyTest(Command):
-    user_options = []
+    description = 'Run unit tests'
+
+    user_options = [('test-verbose', 'v', 'test verbose'),
+                    ('no-capture', 's', 'disable output capturing')]
 
     def initialize_options(self):
-        pass
+        self.test_verbose = None
+        self.no_capture = None
 
     def finalize_options(self):
         pass
@@ -18,7 +22,12 @@ class PyTest(Command):
     def run(self):
         import sys
         import subprocess
-        errno = subprocess.call([sys.executable, 'runtests.py'])
+        cmd = [sys.executable, 'runtests.py']
+        if self.test_verbose:
+            cmd.append('-v')
+        if self.no_capture:
+            cmd.append('-s')
+        errno = subprocess.call(cmd)
         raise SystemExit(errno)
 
 
