@@ -1,0 +1,2 @@
+include *.txt
+include gpx2spatialite/data/sql/*.sql
