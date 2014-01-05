@@ -109,6 +109,7 @@ def main():
             import_citydefs(cursor, f)
             conn.commit()
 
+    cursor.close()
     conn.close()
 
 
