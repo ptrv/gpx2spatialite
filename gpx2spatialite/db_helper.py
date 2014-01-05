@@ -43,8 +43,7 @@ def init_spatial_metadata(connection):
     spatialite_version = result.fetchone()[0]
 
     from distutils.version import LooseVersion
-    if cmp(LooseVersion(spatialite_version),
-           LooseVersion('4.1')) == -1:
+    if LooseVersion(spatialite_version) < LooseVersion('4.1'):
         query = 'SELECT InitSpatialMetaData()'
     else:
         query = 'SELECT InitSpatialMetaData(1)'
