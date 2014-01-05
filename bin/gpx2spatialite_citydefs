@@ -71,7 +71,8 @@ def export_citydefs(cursor, out_file):
     cursor.execute(sql)
 
     out_file.write("BEGIN TRANSACTION;\n")
-    for row in cursor.fetchall():
+    rows = cursor.fetchall()
+    for row in rows:
         line = "INSERT INTO citydefs ('city', 'country', 'geom') VALUES"
         line += "(\"%s\", \"%s\", "\
                 "GeomFromText('%s', 4326));\n" % (row[1].encode('utf-8'),
@@ -80,18 +81,27 @@ def export_citydefs(cursor, out_file):
         out_file.write(line)
     out_file.write("COMMIT;\n")
 
+    return len(rows)
+
 
 def import_citydefs(cursor, sql_file):
     """
     Import citydefs from a sql insert script.
     """
-    sql_lines = sql_file.readlines()
-    for line in sql_lines:
-        if re.match("BEGIN TRANSACTION|COMMIT", line) is None:
+    sql_str = sql_file.read()
+    sql_stmts = sql_str.split(';')
+
+    num_inserted = 0
+    num_failed = 0
+    for stmt in sql_stmts:
+        if re.search(r"INSERT INTO", stmt):
             try:
-                cursor.execute(line)
+                cursor.execute(stmt + ';')
+                num_inserted += 1
             except spatialite.IntegrityError:
-                pass
+                num_failed += 1
+
+    return num_inserted, num_failed
 
 
 def main():
@@ -103,11 +113,18 @@ def main():
 
     if is_export:
         with open(filepath, "w",) as f:
-            export_citydefs(cursor, f)
+            num_exported = export_citydefs(cursor, f)
+            print('Exported {0} locations'.format(num_exported))
     elif is_import:
-        with open(filepath, "r") as f:
-            import_citydefs(cursor, f)
-            conn.commit()
+        try:
+            with open(filepath, "r") as f:
+                num_i, num_f = import_citydefs(cursor, f)
+                conn.commit()
+                print('Imported {0} locations'.format(num_i))
+                if num_f > 0:
+                    print('{0} locations failed'.format(num_f))
+        except IOError as err:
+            print(err)
 
     cursor.close()
     conn.close()
