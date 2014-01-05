@@ -64,10 +64,13 @@ def parseargs():
 
     update_locs = options.update_locs
 
-    if options.dbasepath is None:
+    def print_option_missing_and_exit():
         print('\nError: mandatory option is missing\n')
         optparser.print_usage()
         sys.exit(2)
+
+    if options.dbasepath is None:
+        print_option_missing_and_exit()
 
     dbpath = os.path.expanduser(options.dbasepath)
 
@@ -75,14 +78,10 @@ def parseargs():
         return None, None, dbpath, None, True
 
     if len(args) < 1:
-        print("\nError: Wrong number of arguments!\n")
-        optparser.print_usage()
-        sys.exit(2)
+        print_option_missing_and_exit()
 
     if options.user is None:
-        print('\nError: mandatory option is missing\n')
-        optparser.print_usage()
-        sys.exit(2)
+        print_option_missing_and_exit()
 
     user = options.user
 
