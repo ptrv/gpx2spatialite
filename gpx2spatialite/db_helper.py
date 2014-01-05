@@ -14,7 +14,7 @@
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
 
 
-from .spatialite_finder import get_connection
+from .spatialite_finder import spatialite, get_connection
 from .__init__ import get_data
 
 
@@ -22,28 +22,35 @@ def create_new_db(db_path):
     connection = get_connection(db_path)
     create_db_script = get_data("sql/create_db.sql")
 
-    cursor = connection.cursor()
-
     init_spatial_metadata(connection)
 
-    create_db_query = open(create_db_script, 'r').read()
-    cursor.executescript(create_db_query)
-    connection.commit()
+    try:
+        with open(create_db_script, 'r') as f:
+            create_db_query = f.read()
+            try:
+                with connection:
+                    connection.executescript(create_db_query)
+            except spatialite.Error as err:
+                print('SQL Error: ' + str(err))
+    except IOError as err:
+        print(err)
 
-    cursor.close()
     connection.close()
 
 
 def init_spatial_metadata(connection):
-    cursor = connection.cursor()
-    result = cursor.execute('SELECT spatialite_version()')
+    result = connection.execute('SELECT spatialite_version()')
     spatialite_version = result.fetchone()[0]
 
     from distutils.version import LooseVersion
     if cmp(LooseVersion(spatialite_version),
            LooseVersion('4.1')) == -1:
-        cursor.execute('SELECT InitSpatialMetaData()')
+        query = 'SELECT InitSpatialMetaData()'
     else:
-        cursor.execute('SELECT InitSpatialMetaData(1)')
+        query = 'SELECT InitSpatialMetaData(1)'
 
-    connection.commit()
+    try:
+        with connection:
+            connection.execute(query)
+    except spatialite.Error as err:
+        print('SQL Error: ' + str(err))
