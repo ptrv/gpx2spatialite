@@ -45,7 +45,8 @@ def dummy_files(request):
     # run cleanup function after tests finished
     request.addfinalizer(cleanup)
 
-    return [directory_name, tmp1.name, tmp2.name, tmp3.name]
+    return {'dir': directory_name, 'tmp1': tmp1.name,
+            'tmp2': tmp2.name, 'tmp3': tmp3.name}
 
 
 class Db:
