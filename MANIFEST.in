@@ -1,3 +1,2 @@
-include README.rst
-include LICENSE
+include *.txt
 include gpx2spatialite/data/sql/*.sql

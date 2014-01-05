@@ -32,7 +32,7 @@ class PyTest(Command):
 
 
 def readme():
-    with open('README.rst') as readme_file:
+    with open('README.txt') as readme_file:
         return readme_file.read()
 
 setup(description='gpx2spatialite',
@@ -51,4 +51,4 @@ setup(description='gpx2spatialite',
       cmdclass={'test': PyTest},
       include_package_data=True,
       zip_safe=False,
-      license='GPL')
+      license='LICENSE.txt')

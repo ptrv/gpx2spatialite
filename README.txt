@@ -1,5 +1,6 @@
+==============
 gpx2spatialite
---------------
+==============
 :Author: Daniel Belasco Rogers <http://planbperformance.net/dan>,
          Peter Vasil <mail@petervasil.net>
 
@@ -10,7 +11,7 @@ tracklines to a database (SQL for database below)
 
 
 Usage
-=====
+-----
 
 Run the script::
 
@@ -18,7 +19,7 @@ Run the script::
 
 
 Create a new database
-=====================
+---------------------
 
 Run script to create a new database and initialize it::
 
@@ -26,7 +27,7 @@ Run script to create a new database and initialize it::
 
 
 CityDefs
-========
+--------
 
 Import/update citydefs into existing database::
 
@@ -38,8 +39,14 @@ Export citydefs table::
 
 
 Unit tests
-==========
+----------
 
 Run the following command to run the tests::
 
   python setup.py test
+
+..
+
+   Local Variables:
+   mode: rst
+   End:
