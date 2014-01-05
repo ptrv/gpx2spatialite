@@ -55,10 +55,9 @@ def extractpoints(filepath, cursor, skip_locs, skip_wpts):
     wpts = []
 
     try:
-        with open(filepath) as file:
-            # file = open(filepath)
+        with open(filepath) as gpx_file:
             try:
-                gpx = gpxpy.parse(file)
+                gpx = gpxpy.parse(gpx_file)
             except Exception as e:
                 print("GPXException ({0}) for {1}: {2}.".format(type(e),
                                                                 filepath,
