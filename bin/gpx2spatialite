@@ -1,0 +1,187 @@
+#!/usr/bin/env python
+#-*- coding:utf-8 -*-
+
+# Copyright (C) 2013, 2014  Daniel Belasco Rogers <http://planbperformance.net/dan>,
+#                           Peter Vasil <mail@petervasil.net>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see [http://www.gnu.org/licenses/].
+
+
+import sys
+import os
+from datetime import datetime
+from optparse import OptionParser
+import gpx2spatialite as g2s
+
+
+def parseargs():
+    """
+    parse command line arguments and define options etc
+    """
+    usage = "usage: %prog [options] -d <database> -u <username> "\
+            "/path/to/gpx-file.gpx or /path/to/folder"
+    optparser = OptionParser(usage,
+                             version="%prog {0}".format(g2s.__version__))
+    optparser.add_option("-d",
+                         "--database",
+                         dest="dbasepath",
+                         metavar="FILE",
+                         help="Define path to alternate database \
+                         (mandatory option)")
+
+    optparser.add_option("-u",
+                         "--user",
+                         dest="user",
+                         metavar="NAME",
+                         help="User name (mandatory option)")
+
+    optparser.add_option("--updatelocations",
+                         dest="update_locs",
+                         default=False,
+                         action="store_true",
+                         help="Update locations for points \
+(<username>, <gpxfile> not needed)")
+
+    optparser.add_option("-s",
+                         "--skiplocations",
+                         dest="skip_locs",
+                         default=False,
+                         action="store_true",
+                         help="Skip querying locations for points (faster)")
+
+    (options, args) = optparser.parse_args()
+
+    update_locs = options.update_locs
+
+    def print_option_missing_and_exit():
+        print('\nError: mandatory option is missing\n')
+        optparser.print_usage()
+        sys.exit(2)
+
+    if options.dbasepath is None:
+        print_option_missing_and_exit()
+
+    dbpath = os.path.expanduser(options.dbasepath)
+
+    if update_locs is True:
+        return None, None, dbpath, None, True
+
+    if len(args) < 1:
+        print_option_missing_and_exit()
+
+    if options.user is None:
+        print_option_missing_and_exit()
+
+    user = options.user
+
+    filepaths = args
+    for f in filepaths:
+        if g2s.checkfile(f) is False:
+            print("{0} is not a file or directory".format(f))
+            sys.exit(2)
+
+    skip_locs = options.skip_locs
+
+    return filepaths, user, dbpath, skip_locs, False
+
+
+def main():
+    """
+    you know what 'main' does - run everything in the right order and
+    print helpful messages to stdout
+    """
+    # for timing (rough)
+    starttime = datetime.now()
+
+    filepaths, username, dbpath, skip_locs, update_locs = parseargs()
+
+    conn = g2s.get_connection(dbpath)
+    cursor = conn.cursor()
+
+    if update_locs is True:
+        g2s.update_locations(conn)
+        sys.exit(0)
+
+    gpx_filepaths = g2s.read_filepaths(filepaths, ".gpx")
+    print("\nFound {0} .gpx files.\n".format(len(gpx_filepaths)))
+
+    userid = g2s.get_user_id(cursor, username)
+    if userid == -1:
+        # user name is not in database - ask to add
+        if g2s.checkadd(username):
+            print("User {0} sucessfully added to database".format(username))
+            userid = g2s.insert_user(cursor, username)
+            conn.commit()
+        else:
+            print("Please run again specifying a known user:")
+            cursor.close()
+            conn.close()
+            sys.exit(0)
+
+    for filepath in gpx_filepaths:
+        if g2s.check_if_gpxfile_exists(cursor, filepath) is True:
+            print("File {0} already in database".format(filepath))
+            continue
+
+        parsing_starttimep = datetime.now()
+        print("#" * 48)
+        print("Parsing points in {0}".format(filepath))
+        trkpts, trklines, firsttimestamp, lasttimestamp, wpts = \
+            g2s.extractpoints(filepath, cursor, skip_locs, False)
+
+        dbg_str = "File first timestamp: {0}, ".format(firsttimestamp)
+        dbg_str += "last timestamp: {0}".format(lasttimestamp)
+        print(dbg_str)
+
+        if firsttimestamp == 0 or lasttimestamp == 0:
+            continue
+            print("Skipping importing {0}.".format(filepath))
+
+        parsing_endtime = datetime.now()
+        dbg_str = "\nParsing {0} points and {1} waypoints ".format(len(trkpts),
+                                                                   len(wpts))
+        dbg_str += "from gpx file took {0}".format(parsing_endtime -
+                                                   parsing_starttimep)
+        print(dbg_str)
+
+        db_starttime = datetime.now()
+        # print "Entering file into database"
+        g2s.enterfile(filepath, cursor, userid, firsttimestamp, lasttimestamp)
+
+        file_uid = g2s.get_currentfileid(cursor)
+
+        # print "Entering points into database"
+        g2s.enterpoints(cursor, userid, trkpts, file_uid)
+
+        # print "Entering lines into database"
+        g2s.enterlines(cursor, userid, trklines, file_uid)
+
+        # print entering waypoints into database
+        g2s.enterwaypoints(cursor, userid, wpts, file_uid)
+
+        conn.commit()
+
+        db_endtime = datetime.now()
+        print("Entering into database took {0}".format(db_endtime -
+                                                       db_starttime))
+
+    cursor.close()
+    conn.close()
+
+    endtime = datetime.now()
+    print("#" * 48)
+    print("Script took {0}\n".format(endtime - starttime))
+
+if __name__ == '__main__':
+    sys.exit(main())

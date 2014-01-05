@@ -1,0 +1,129 @@
+#!/usr/bin/env python
+#-*- coding:utf-8 -*-
+
+# Copyright (C) 2013, 2014  Peter Vasil <mail@petervasil.net>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see [http://www.gnu.org/licenses/].
+
+
+import os.path
+import sys
+import re
+from optparse import OptionParser
+import gpx2spatialite
+from gpx2spatialite import spatialite
+
+
+def parseargs():
+    """
+    Parse commandline arguments
+    """
+    usage = "usage: %prog [-i|-e <path/to/input|output.sql>] "\
+            "/path/to/database.sqlite "
+    optparser = OptionParser(usage, version="%prog 0.1")
+    optparser.add_option("-e",
+                         "--export",
+                         metavar='SQL-FILE',
+                         dest="export_citydefs",
+                         help="Export citydefs")
+    optparser.add_option("-i",
+                         "--import",
+                         metavar='SQL-FILE',
+                         dest="import_citydefs",
+                         help="Import citydefs")
+
+    (options, args) = optparser.parse_args()
+
+    if len(args) != 1:
+        optparser.error('The database path argument is missing!')
+
+    dbpath = os.path.expanduser(args[0])
+
+    if options.import_citydefs is None and options.export_citydefs is None:
+        error = "Mandatory option is missing. Please set -e or -i!"
+        optparser.error(error)
+
+    return dbpath, options.export_citydefs, options.import_citydefs
+
+
+def export_citydefs(cursor, out_file):
+    """
+    Export citydefs from database to a sql insert script.
+    """
+    sql = "SELECT citydef_uid, city, country, AsText(geom) "
+    sql += "FROM citydefs ORDER BY country, city"
+    cursor.execute(sql)
+
+    out_file.write("BEGIN TRANSACTION;\n")
+    rows = cursor.fetchall()
+    for row in rows:
+        line = "INSERT INTO citydefs ('city', 'country', 'geom') VALUES"
+        line += "(\"%s\", \"%s\", "\
+                "GeomFromText('%s', 4326));\n" % (row[1].encode('utf-8'),
+                                                  row[2].encode('utf-8'),
+                                                  row[3].encode('utf-8'))
+        out_file.write(line)
+    out_file.write("COMMIT;\n")
+
+    return len(rows)
+
+
+def import_citydefs(cursor, sql_file):
+    """
+    Import citydefs from a sql insert script.
+    """
+    sql_str = sql_file.read()
+    sql_stmts = sql_str.split(';')
+
+    num_inserted = 0
+    num_failed = 0
+    for stmt in sql_stmts:
+        if re.search(r"INSERT INTO", stmt):
+            try:
+                cursor.execute(stmt + ';')
+                num_inserted += 1
+            except spatialite.IntegrityError:
+                num_failed += 1
+
+    return num_inserted, num_failed
+
+
+def main():
+
+    dbpath, export_file, import_file = parseargs()
+
+    conn = gpx2spatialite.get_connection(dbpath)
+    cursor = conn.cursor()
+
+    if export_file:
+        with open(export_file, "w",) as f:
+            num_exported = export_citydefs(cursor, f)
+            print('Exported {0} locations'.format(num_exported))
+    elif import_file:
+        try:
+            with open(import_file, "r") as f:
+                num_i, num_f = import_citydefs(cursor, f)
+                conn.commit()
+                print('Imported {0} locations'.format(num_i))
+                if num_f > 0:
+                    print('{0} locations failed'.format(num_f))
+        except IOError as err:
+            print(err)
+
+    cursor.close()
+    conn.close()
+
+
+if __name__ == '__main__':
+    sys.exit(main())
