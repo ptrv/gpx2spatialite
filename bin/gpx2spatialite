@@ -160,7 +160,7 @@ def main():
         # print "Entering file into database"
         g2s.enterfile(filepath, cursor, userid, firsttimestamp, lasttimestamp)
 
-        file_uid = g2s.getcurrentfileid(cursor)
+        file_uid = g2s.get_currentfileid(cursor)
 
         # print "Entering points into database"
         g2s.enterpoints(cursor, userid, trkpts, file_uid)
