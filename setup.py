@@ -40,7 +40,7 @@ setup(description='gpx2spatialite',
       author='Peter Vasil, Daniel Belasco Rogers',
       url='https://github.com/ptrv/gpx2spatialite',
       download_url='https://github.com/ptrv/gpx2spatialite',
-      author_email='https://github.com/ptrv/gpx2spatialite',
+      author_email='mail@petervasil.net',
       version=__version__,
       install_requires=['gpxpy'],
       packages=['gpx2spatialite'],
@@ -51,4 +51,9 @@ setup(description='gpx2spatialite',
       cmdclass={'test': PyTest},
       include_package_data=True,
       zip_safe=False,
-      license='LICENSE.txt')
+      license='GPLv3',
+      classifiers=[
+          'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+          'Programming Language :: Python :: 2 :: Only',
+          'Topic :: Scientific/Engineering :: GIS'
+      ])

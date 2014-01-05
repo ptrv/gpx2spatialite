@@ -15,7 +15,7 @@ Usage
 
 Run the script::
 
-  gpx2spatialite -d <path/to/database> <path/to/gpx> <user_id>
+  gpx2spatialite -d <path/to/database> -u <user_id> <path/to/gpx>
 
 
 Create a new database
