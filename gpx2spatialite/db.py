@@ -17,67 +17,9 @@
 
 import sys
 import os.path
-import hashlib
 from datetime import datetime
-from math import radians, atan2, sin, cos, degrees
 from .spatialite_finder import spatialite
-try:
-    import gpxpy
-    import gpxpy.gpx
-except ImportError:
-    print('*' * 48)
-    print('This script needs the python module gpxpy to work')
-    print('')
-    print('You can get it by typing:')
-    print('sudo easy_install gpxpy')
-    print('Or install manually from here '
-          'https://pypi.python.org/pypi/gpxpy/0.8.6')
-    print('*' * 48)
-    sys.exit(2)
-import uuid
-
-
-def getmd5(filepath):
-    """
-    generates md5 hexdigests from files (necessary for the file table)
-
-    Source:
-    http://stackoverflow.com/a/11143944/464831
-    """
-    md5 = hashlib.md5()
-    try:
-        with open(filepath, 'rb') as f:
-            for chunk in iter(lambda: f.read(128 * md5.block_size), b''):
-                md5.update(chunk)
-            return md5.hexdigest()
-    except IOError as err:
-        print(err)
-        return ''
-
-
-def getcourse(lat1, lon1, lat2, lon2):
-    """
-    initial course [degrees] to reach (lat2, lon2) from (lat1, lon1)
-    on a great circle
-
-    range of returned values:
-    -180 < course <= 180
-    (-90 = west, 0 = north, 90 = east, 180 = south)
-    """
-    if lat1 + 1e-10 > 90.0:
-        return 180.0  # starting from north pole -> the only direction is south
-    elif lat1 - 1e-10 < -90.0:
-        return 0.0   # starting from south pole -> the only direction is north
-
-    lat1rad = radians(lat1)
-    lat2rad = radians(lat2)
-    londiff = radians(lon2 - lon1)
-    course_rad = atan2(
-        sin(londiff) * cos(lat2rad),
-        (cos(lat1rad) * sin(lat2rad) -
-         sin(lat1rad) * cos(lat2rad) * cos(londiff)))
-
-    return degrees(course_rad)
+from .helper import getmd5
 
 
 def enterfile(filepath, cursor, user, firsttimestamp, lasttimestamp):
@@ -111,7 +53,7 @@ def enterfile(filepath, cursor, user, firsttimestamp, lasttimestamp):
     return
 
 
-def getcurrentfileid(cursor):
+def get_currentfileid(cursor):
     """
     query the database for the id number of the file just entered
     """
@@ -123,7 +65,7 @@ def getcurrentfileid(cursor):
     return file_uid
 
 
-def getlasttrkseg(cursor):
+def get_lasttrkseg(cursor):
     """
     query the database for the last trkseg_id
     """
@@ -266,140 +208,6 @@ def get_location(cursor, lon, lat):
         loc_id = 1
 
     return loc_id
-
-
-def extractpoints(filepath, cursor, skip_locs, skip_wpts):
-    """
-    parse the gpx file using gpxpy and return a list of lines
-
-    line = trkseg_id, trksegpt_id, ele, time, course, speed, loc, geom
-
-    trackpoint columns: trackpoint_uid, trkseg_id, trksegpt_id, ele,
-    utctimestamp, cmt, course, speed, file_uid, user_uid, citydef_uid, geom
-
-    trackline columns: trkline_uid, trksegid_fm_trkpts, name, cmt,
-    timestamp_start, timestamp_end, length_m, time_sec, speed_kph,
-    points, file_uid, user_uid, geom
-
-    tracksegment columns: trkseg_uid, trkseg_uuid
-
-    waypoint_line: name, ele, time, symbol, loc, geom
-    """
-    trklines = []
-    trkpts = []
-    wpts = []
-
-    try:
-        with open(filepath) as file:
-            # file = open(filepath)
-            try:
-                gpx = gpxpy.parse(file)
-            except Exception as e:
-                print("GPXException ({0}) for {1}: {2}.".format(type(e),
-                                                                filepath,
-                                                                e))
-                return trkpts, trklines, 0, 0, wpts
-
-            firsttimestamp, lasttimestamp = gpx.get_time_bounds()
-
-            for track in gpx.tracks:
-                for segment in track.segments:
-                    if segment.get_points_no() > 1:
-                        seg_uuid = uuid.uuid4()
-                        insert_segment(cursor, seg_uuid)
-                        lastseg = getlasttrkseg(cursor)
-                        trksegpt_id = 0
-                        pts_strs = []
-                        lastpoint = None
-                        for point in segment.points:
-                            lat = point.latitude
-                            lon = point.longitude
-                            geom_str = "Point({0} {1})".format(lon, lat)
-
-                            pts_str = "{0} {1}".format(lon, lat)
-                            pts_strs.append(pts_str)
-
-                            time = point.time
-                            ele = point.elevation
-                            if ele is None:
-                                print("No elevation recorded for "
-                                      "{0} - assuming 0".format(time))
-                                ele = 0
-                            speed = point.speed
-
-                            if lastpoint:
-                                lon1 = lastpoint.longitude
-                                lat1 = lastpoint.latitude
-                                course = getcourse(lat1, lon1, lat, lon)
-                                if not speed:
-                                    speed = point.speed_between(lastpoint)
-                                    if speed is None:
-                                        speed = 0
-                            else:
-                                course = 0
-                                if not speed:
-                                    speed = 0
-
-                            if not skip_locs:
-                                loc = get_location(cursor, lon, lat)
-                            else:
-                                loc = -1
-
-                            ptline = [lastseg, trksegpt_id, ele, time,
-                                      course, speed, loc, geom_str]
-
-                            trkpts.append(ptline)
-                            trksegpt_id += 1
-                            lastpoint = point
-
-                        timestamp_start, timestamp_end \
-                            = segment.get_time_bounds()
-                        length_m = segment.length_2d()
-                        time_sec = segment.get_duration()
-                        try:
-                            speed_kph = (length_m / time_sec) * 3.6
-                        except ZeroDivisionError:
-                            speed_kph = 0.0
-                        linestr = "LINESTRING("
-                        linestr += ",".join(pts_strs)
-                        linestr += ")"
-                        trkline = [lastseg, timestamp_start, timestamp_end,
-                                   length_m, time_sec, speed_kph, linestr]
-                        trklines.append(trkline)
-                    else:
-                        print("skipping segment with < 2 points")
-
-            if not skip_wpts:
-                for wpt in gpx.waypoints:
-                    wptline = []
-                    wpt_lat = wpt.latitude
-                    wpt_lon = wpt.longitude
-                    wpt_geom_str = "Point({0} {1})".format(wpt_lon, wpt_lat)
-
-                    wpt_name = wpt.name
-                    wpt_symbol = wpt.symbol
-                    wpt_time = wpt.time
-                    wpt_ele = wpt.elevation
-                    if wpt_ele is None:
-                        print("No elevation recorded for "
-                              "{0} - assuming 0".format(wpt_time))
-                        wpt_ele = 0
-
-                    if not skip_locs:
-                        wpt_loc = get_location(cursor, wpt_lon, wpt_lat)
-                    else:
-                        wpt_loc = -1
-
-                    wptline = [wpt_name, wpt_ele, wpt_time, wpt_symbol,
-                               wpt_loc, wpt_geom_str]
-
-                    wpts.append(wptline)
-
-            return trkpts, trklines, firsttimestamp, lasttimestamp, wpts
-
-    except IOError as err:
-        print(err)
-        sys.exit(2)
 
 
 def update_locations(connection):
