@@ -30,11 +30,11 @@ CityDefs
 
 Import/update citydefs into existing database::
 
-  gpx2spatialite_citydefs -i <path/to/database> <path/to/input.sql>
+  gpx2spatialite_citydefs -i <path/to/input.sql> <path/to/database>
 
 Export citydefs table::
 
-  gpx2spatialite_citydefs -e <path/to/database> <path/to/output.sql>
+  gpx2spatialite_citydefs -e <path/to/output.sql> <path/to/database>
 
 
 Unit tests
