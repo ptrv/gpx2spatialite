@@ -29,37 +29,32 @@ def parseargs():
     """
     Parse commandline arguments
     """
-    usage = "usage: %prog [options] /path/to/database.sqlite "\
-            "/path/to/input_output.sql"
+    usage = "usage: %prog [-i|-e <path/to/input|output.sql>] "\
+            "/path/to/database.sqlite "
     optparser = OptionParser(usage, version="%prog 0.1")
     optparser.add_option("-e",
                          "--export",
+                         metavar='SQL-FILE',
                          dest="export_citydefs",
-                         default=False,
-                         action="store_true",
                          help="Export citydefs")
     optparser.add_option("-i",
                          "--import",
+                         metavar='SQL-FILE',
                          dest="import_citydefs",
-                         default=False,
-                         action="store_true",
                          help="Import citydefs")
 
     (options, args) = optparser.parse_args()
-    if len(args) != 2:
-        error = "Specify a database path and an import/export sql file"
-        optparser.error(error)
-        sys.exit(2)
-    dbpath = os.path.expanduser(args[0])
-    in_out_file = args[1]
-    is_export = options.export_citydefs
-    is_import = options.import_citydefs
-    if not is_export and not is_import:
-        error = "Please select option -e or -i"
-        optparser.error(error)
-        sys.exit(2)
 
-    return is_export, is_import, dbpath, in_out_file
+    if len(args) != 1:
+        optparser.error('The database path argument is missing!')
+
+    dbpath = os.path.expanduser(args[0])
+
+    if options.import_citydefs is None and options.export_citydefs is None:
+        error = "Mandatory option is missing. Please select option -e or -i!"
+        optparser.error(error)
+
+    return dbpath, options.export_citydefs, options.import_citydefs
 
 
 def export_citydefs(cursor, out_file):
@@ -106,18 +101,18 @@ def import_citydefs(cursor, sql_file):
 
 def main():
 
-    is_export, is_import, dbpath, filepath = parseargs()
+    dbpath, export_file, import_file = parseargs()
 
     conn = gpx2spatialite.get_connection(dbpath)
     cursor = conn.cursor()
 
-    if is_export:
-        with open(filepath, "w",) as f:
+    if export_file:
+        with open(export_file, "w",) as f:
             num_exported = export_citydefs(cursor, f)
             print('Exported {0} locations'.format(num_exported))
-    elif is_import:
+    elif import_file:
         try:
-            with open(filepath, "r") as f:
+            with open(import_file, "r") as f:
                 num_i, num_f = import_citydefs(cursor, f)
                 conn.commit()
                 print('Imported {0} locations'.format(num_i))
