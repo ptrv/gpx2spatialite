@@ -7,7 +7,7 @@ from .db_helper import *
 
 import os
 
-__version__ = '0.5'
+__version__ = '0.6dev'
 
 _ROOT = os.path.abspath(os.path.dirname(__file__))
 
