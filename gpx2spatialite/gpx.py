@@ -32,6 +32,22 @@ import uuid
 from .helper import get_course
 
 
+def get_gpx_file(file_path):
+    """Return GPX file."""
+    try:
+        with open(file_path) as gpx_file:
+            try:
+                gpx = gpxpy.parse(gpx_file)
+                return gpx
+            except Exception as e:
+                print("GPXException ({0}) for {1}: {2}.".format(type(e),
+                                                                file_path,
+                                                                e))
+    except IOError as err:
+        print(err)
+        sys.exit(2)
+
+
 def extractpoints(filepath, last_segment_num=-1, get_loc_func=None,
                   skip_wpts=False):
     """
@@ -55,115 +71,105 @@ def extractpoints(filepath, last_segment_num=-1, get_loc_func=None,
     wpts = []
     segs = []
 
-    try:
-        with open(filepath) as gpx_file:
-            try:
-                gpx = gpxpy.parse(gpx_file)
-            except Exception as e:
-                print("GPXException ({0}) for {1}: {2}.".format(type(e),
-                                                                filepath,
-                                                                e))
-                return trkpts, trklines, 0, 0, wpts, segs
+    gpx = get_gpx_file(filepath)
+    if gpx is None:
+        return trkpts, trklines, 0, 0, wpts, segs
 
-            firsttimestamp, lasttimestamp = gpx.get_time_bounds()
+    firsttimestamp, lasttimestamp = gpx.get_time_bounds()
 
-            lastseg = last_segment_num
+    lastseg = last_segment_num
 
-            for track in gpx.tracks:
-                for segment in track.segments:
-                    if segment.get_points_no() > 1:
-                        seg_uuid = uuid.uuid4()
-                        lastseg += 1
-                        segs.append([lastseg, seg_uuid])
-                        trksegpt_id = 0
-                        pts_strs = []
-                        lastpoint = None
-                        for point in segment.points:
-                            lat = point.latitude
-                            lon = point.longitude
-                            geom_str = "Point({0} {1})".format(lon, lat)
+    for track in gpx.tracks:
+        for segment in track.segments:
+            if segment.get_points_no() > 1:
+                seg_uuid = uuid.uuid4()
+                lastseg += 1
+                segs.append([lastseg, seg_uuid])
+                trksegpt_id = 0
+                pts_strs = []
+                lastpoint = None
+                for point in segment.points:
+                    lat = point.latitude
+                    lon = point.longitude
+                    geom_str = "Point({0} {1})".format(lon, lat)
 
-                            pts_str = "{0} {1}".format(lon, lat)
-                            pts_strs.append(pts_str)
+                    pts_str = "{0} {1}".format(lon, lat)
+                    pts_strs.append(pts_str)
 
-                            time = point.time
-                            ele = point.elevation
-                            if ele is None:
-                                print("No elevation recorded for "
-                                      "{0} - assuming 0".format(time))
-                                ele = 0
-                            speed = point.speed
-
-                            if lastpoint:
-                                lon1 = lastpoint.longitude
-                                lat1 = lastpoint.latitude
-                                course = get_course(lat1, lon1, lat, lon)
-                                if not speed:
-                                    speed = point.speed_between(lastpoint)
-                                    if speed is None:
-                                        speed = 0
-                            else:
-                                course = 0
-                                if not speed:
-                                    speed = 0
-
-                            if get_loc_func:
-                                loc = get_loc_func(lon, lat)
-                            else:
-                                loc = -1
-
-                            ptline = [lastseg, trksegpt_id, ele, time,
-                                      course, speed, loc, geom_str]
-
-                            trkpts.append(ptline)
-                            trksegpt_id += 1
-                            lastpoint = point
-
-                        timestamp_start, timestamp_end \
-                            = segment.get_time_bounds()
-                        length_m = segment.length_2d()
-                        time_sec = segment.get_duration()
-                        try:
-                            speed_kph = (length_m / time_sec) * 3.6
-                        except ZeroDivisionError:
-                            speed_kph = 0.0
-                        linestr = "LINESTRING("
-                        linestr += ",".join(pts_strs)
-                        linestr += ")"
-                        trkline = [lastseg, timestamp_start, timestamp_end,
-                                   length_m, time_sec, speed_kph, linestr]
-                        trklines.append(trkline)
-                    else:
-                        print("skipping segment with < 2 points")
-
-            if not skip_wpts:
-                for wpt in gpx.waypoints:
-                    wptline = []
-                    wpt_lat = wpt.latitude
-                    wpt_lon = wpt.longitude
-                    wpt_geom_str = "Point({0} {1})".format(wpt_lon, wpt_lat)
-
-                    wpt_name = wpt.name
-                    wpt_symbol = wpt.symbol
-                    wpt_time = wpt.time
-                    wpt_ele = wpt.elevation
-                    if wpt_ele is None:
+                    time = point.time
+                    ele = point.elevation
+                    if ele is None:
                         print("No elevation recorded for "
-                              "{0} - assuming 0".format(wpt_time))
-                        wpt_ele = 0
+                              "{0} - assuming 0".format(time))
+                        ele = 0
+                    speed = point.speed
+
+                    if lastpoint:
+                        lon1 = lastpoint.longitude
+                        lat1 = lastpoint.latitude
+                        course = get_course(lat1, lon1, lat, lon)
+                        if not speed:
+                            speed = point.speed_between(lastpoint)
+                            if speed is None:
+                                speed = 0
+                    else:
+                        course = 0
+                        if not speed:
+                            speed = 0
 
                     if get_loc_func:
-                        wpt_loc = get_loc_func(wpt_lon, wpt_lat)
+                        loc = get_loc_func(lon, lat)
                     else:
-                        wpt_loc = -1
+                        loc = -1
 
-                    wptline = [wpt_name, wpt_ele, wpt_time, wpt_symbol,
-                               wpt_loc, wpt_geom_str]
+                    ptline = [lastseg, trksegpt_id, ele, time,
+                              course, speed, loc, geom_str]
 
-                    wpts.append(wptline)
+                    trkpts.append(ptline)
+                    trksegpt_id += 1
+                    lastpoint = point
 
-            return trkpts, trklines, firsttimestamp, lasttimestamp, wpts, segs
+                timestamp_start, timestamp_end \
+                    = segment.get_time_bounds()
+                length_m = segment.length_2d()
+                time_sec = segment.get_duration()
+                try:
+                    speed_kph = (length_m / time_sec) * 3.6
+                except ZeroDivisionError:
+                    speed_kph = 0.0
+                linestr = "LINESTRING("
+                linestr += ",".join(pts_strs)
+                linestr += ")"
+                trkline = [lastseg, timestamp_start, timestamp_end,
+                           length_m, time_sec, speed_kph, linestr]
+                trklines.append(trkline)
+            else:
+                print("skipping segment with < 2 points")
 
-    except IOError as err:
-        print(err)
-        sys.exit(2)
+    if not skip_wpts:
+        for wpt in gpx.waypoints:
+            wptline = []
+            wpt_lat = wpt.latitude
+            wpt_lon = wpt.longitude
+            wpt_geom_str = "Point({0} {1})".format(wpt_lon, wpt_lat)
+
+            wpt_name = wpt.name
+            wpt_symbol = wpt.symbol
+            wpt_time = wpt.time
+            wpt_ele = wpt.elevation
+            if wpt_ele is None:
+                print("No elevation recorded for "
+                      "{0} - assuming 0".format(wpt_time))
+                wpt_ele = 0
+
+            if get_loc_func:
+                wpt_loc = get_loc_func(wpt_lon, wpt_lat)
+            else:
+                wpt_loc = -1
+
+            wptline = [wpt_name, wpt_ele, wpt_time, wpt_symbol,
+                       wpt_loc, wpt_geom_str]
+
+            wpts.append(wptline)
+
+    return trkpts, trklines, firsttimestamp, lasttimestamp, wpts, segs
