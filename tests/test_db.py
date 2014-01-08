@@ -18,13 +18,11 @@ class TestDb:
 
     def test_enterfile(self, gpx_path, db):
         cursor = db.get_cursor()
-        extracted_points = gpx2spatialite.extractpoints(gpx_path,
-                                                        cursor,
-                                                        True, True)
+        extracted_pts = gpx2spatialite.extractpoints(gpx_path, skip_wpts=True)
 
         gpx2spatialite.enterfile(gpx_path, cursor, 1,
-                                 extracted_points[2],
-                                 extracted_points[3])
+                                 extracted_pts[2],
+                                 extracted_pts[3])
 
         sql = "select * from files"
         res = cursor.execute(sql)
@@ -44,9 +42,7 @@ class TestDb:
 
     def test_entertrackpoints(self, gpx_path, db):
         cursor = db.get_cursor()
-        extracted_pts = gpx2spatialite.extractpoints(gpx_path,
-                                                     cursor,
-                                                     True, False)
+        extracted_pts = gpx2spatialite.extractpoints(gpx_path)
 
         fileid, userid = self.get_file_and_user(gpx_path, db)
         gpx2spatialite.enterpoints(cursor, userid,
@@ -60,7 +56,7 @@ class TestDb:
         assert len(trkpt_rows) == 4
 
         assert trkpt_rows[1][0] == 2
-        assert trkpt_rows[1][1] == 2
+        assert trkpt_rows[1][1] == 0
         assert trkpt_rows[1][2] == 1
         assert trkpt_rows[1][3] == 65.51
         assert trkpt_rows[1][4] == "2012-03-17 12:46:44"
@@ -74,9 +70,7 @@ class TestDb:
 
     def test_entertracklines(self, gpx_path, db):
         cursor = db.get_cursor()
-        extracted_pts = gpx2spatialite.extractpoints(gpx_path,
-                                                     cursor,
-                                                     True, False)
+        extracted_pts = gpx2spatialite.extractpoints(gpx_path)
 
         fileid, userid = self.get_file_and_user(gpx_path, db)
         gpx2spatialite.enterlines(cursor, userid,
@@ -89,7 +83,7 @@ class TestDb:
         assert len(trklines_rows) == 1
 
         assert trklines_rows[0][0] == 1
-        assert trklines_rows[0][1] == 3
+        assert trklines_rows[0][1] == 0
         assert trklines_rows[0][2] is None
         assert trklines_rows[0][3] == "2012-03-17 12:46:19"
         assert trklines_rows[0][4] == "2012-03-17 12:47:23"
@@ -101,9 +95,7 @@ class TestDb:
 
     def test_enterwaypoints(self, gpx_path, db):
         cursor = db.get_cursor()
-        extracted_wpts = gpx2spatialite.extractpoints(gpx_path,
-                                                      cursor,
-                                                      True, False)
+        extracted_wpts = gpx2spatialite.extractpoints(gpx_path)
 
         fileid, userid = self.get_file_and_user(gpx_path, db)
 

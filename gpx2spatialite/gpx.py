@@ -30,10 +30,10 @@ except ImportError:
     sys.exit(2)
 import uuid
 from .helper import get_course
-from .db import insert_segment, get_lasttrkseg, get_location
 
 
-def extractpoints(filepath, cursor, skip_locs, skip_wpts):
+def extractpoints(filepath, last_segment_num=-1, get_loc_func=None,
+                  skip_wpts=False):
     """
     parse the gpx file using gpxpy and return a list of lines
 
@@ -53,6 +53,7 @@ def extractpoints(filepath, cursor, skip_locs, skip_wpts):
     trklines = []
     trkpts = []
     wpts = []
+    segs = []
 
     try:
         with open(filepath) as gpx_file:
@@ -62,16 +63,18 @@ def extractpoints(filepath, cursor, skip_locs, skip_wpts):
                 print("GPXException ({0}) for {1}: {2}.".format(type(e),
                                                                 filepath,
                                                                 e))
-                return trkpts, trklines, 0, 0, wpts
+                return trkpts, trklines, 0, 0, wpts, segs
 
             firsttimestamp, lasttimestamp = gpx.get_time_bounds()
+
+            lastseg = last_segment_num
 
             for track in gpx.tracks:
                 for segment in track.segments:
                     if segment.get_points_no() > 1:
                         seg_uuid = uuid.uuid4()
-                        insert_segment(cursor, seg_uuid)
-                        lastseg = get_lasttrkseg(cursor)
+                        lastseg += 1
+                        segs.append([lastseg, seg_uuid])
                         trksegpt_id = 0
                         pts_strs = []
                         lastpoint = None
@@ -104,8 +107,8 @@ def extractpoints(filepath, cursor, skip_locs, skip_wpts):
                                 if not speed:
                                     speed = 0
 
-                            if not skip_locs:
-                                loc = get_location(cursor, lon, lat)
+                            if get_loc_func:
+                                loc = get_loc_func(lon, lat)
                             else:
                                 loc = -1
 
@@ -149,8 +152,8 @@ def extractpoints(filepath, cursor, skip_locs, skip_wpts):
                               "{0} - assuming 0".format(wpt_time))
                         wpt_ele = 0
 
-                    if not skip_locs:
-                        wpt_loc = get_location(cursor, wpt_lon, wpt_lat)
+                    if get_loc_func:
+                        wpt_loc = get_loc_func(wpt_lon, wpt_lat)
                     else:
                         wpt_loc = -1
 
@@ -159,7 +162,7 @@ def extractpoints(filepath, cursor, skip_locs, skip_wpts):
 
                     wpts.append(wptline)
 
-            return trkpts, trklines, firsttimestamp, lasttimestamp, wpts
+            return trkpts, trklines, firsttimestamp, lasttimestamp, wpts, segs
 
     except IOError as err:
         print(err)

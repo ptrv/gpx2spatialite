@@ -129,6 +129,11 @@ def main():
             conn.close()
             sys.exit(0)
 
+    if skip_locs:
+        get_loc_func = None
+    else:
+        get_loc_func = g2s.get_location_func(cursor)
+
     for filepath in gpx_filepaths:
         if g2s.check_if_gpxfile_exists(cursor, filepath) is True:
             print("File {0} already in database".format(filepath))
@@ -137,8 +142,15 @@ def main():
         parsing_starttimep = datetime.now()
         print("#" * 48)
         print("Parsing points in {0}".format(filepath))
-        trkpts, trklines, firsttimestamp, lasttimestamp, wpts = \
-            g2s.extractpoints(filepath, cursor, skip_locs, False)
+
+        last_seg_num = g2s.get_lasttrkseg(cursor)
+        trkpts, trklines, firsttimestamp, lasttimestamp, wpts, segs = \
+            g2s.extractpoints(filepath, last_seg_num, get_loc_func, False)
+
+        for segment in segs:
+            seg_id = segment[0]
+            seg_uuid = segment[1]
+            g2s.insert_segment(cursor, seg_id, seg_uuid)
 
         dbg_str = "File first timestamp: {0}, ".format(firsttimestamp)
         dbg_str += "last timestamp: {0}".format(lasttimestamp)

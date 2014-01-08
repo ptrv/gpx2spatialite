@@ -18,6 +18,7 @@
 import sys
 import os.path
 from datetime import datetime
+from functools import partial
 from .spatialite_finder import spatialite
 from .helper import getmd5
 
@@ -181,15 +182,15 @@ def enterwaypoints(cursor, user, waypoints, file_uid):
         cursor.execute(sql)
 
 
-def insert_segment(cursor, seg_uuid):
+def insert_segment(cursor, seg_id, seg_uuid):
     """
     Insert a tracksegment into the database.
 
     Arguments:
     - `seg_uuid`: uuid of segment
     """
-    sql = "INSERT INTO tracksegments (trkseg_uuid) VALUES"
-    sql += "('{0}')".format(seg_uuid)
+    sql = "INSERT INTO tracksegments (trkseg_uid, trkseg_uuid) VALUES"
+    sql += "({0}, '{1}')".format(seg_id, seg_uuid)
     cursor.execute(sql)
 
 
@@ -289,3 +290,8 @@ def insert_user(cursor, username):
     cursor.execute(sql)
 
     return get_user_id(cursor, username)
+
+
+def get_location_func(cursor):
+    """Return the partial function for the location lookup"""
+    return partial(get_location, cursor)
