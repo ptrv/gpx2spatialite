@@ -14,7 +14,7 @@ dist
 build
 eggs
 parts
-bin
+bin/*
 var
 sdist
 develop-eggs
@@ -42,3 +42,7 @@ nosetests.xml
 # other stuff
 *.sqlite
 *.pytest*
+
+!bin/gpx2spatialite
+!bin/gpx2spatialite_create_db
+!bin/gpx2spatialite_citydefs
