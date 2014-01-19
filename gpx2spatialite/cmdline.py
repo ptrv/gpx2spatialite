@@ -23,10 +23,7 @@ def checkfile(filepath):
     """
     Checks if file or folder exists at location
     """
-    if (os.path.isfile(filepath) or os.path.isdir(filepath)):
-        return True
-    else:
-        return False
+    return os.path.isfile(filepath) or os.path.isdir(filepath)
 
 
 def checkadd(username):
@@ -34,7 +31,7 @@ def checkadd(username):
     A name has been entered that is not in database. Ask if a new name
     should be added
     """
-    while 1:
+    while True:
         question = ('Do you want to add {0} as a new user? y or n '
                     .format(username))
         answer = raw_input(question)
