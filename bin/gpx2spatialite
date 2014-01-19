@@ -85,11 +85,13 @@ def parseargs():
 
     user = options.user
 
-    filepaths = args
-    for f in filepaths:
-        if g2s.checkfile(f) is False:
+    filepaths_tmp = args
+    filepaths = []
+    for f in filepaths_tmp:
+        if g2s.checkfile(f):
+            filepaths.append(f)
+        else:
             print("{0} is not a file or directory".format(f))
-            sys.exit(2)
 
     skip_locs = options.skip_locs
 
@@ -116,6 +118,10 @@ def main():
     gpx_filepaths = g2s.read_filepaths(filepaths, ".gpx")
     print("\nFound {0} .gpx files.\n".format(len(gpx_filepaths)))
 
+    if len(gpx_filepaths) == 0:
+        print "No input files!"
+        sys.exit(1)
+
     userid = g2s.get_user_id(cursor, username)
     if userid == -1:
         # user name is not in database - ask to add
@@ -127,7 +133,7 @@ def main():
             print("Please run again specifying a known user:")
             cursor.close()
             conn.close()
-            sys.exit(0)
+            sys.exit(1)
 
     if skip_locs:
         get_loc_func = None
