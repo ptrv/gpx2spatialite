@@ -6,7 +6,7 @@ import gpx2spatialite
 @pytest.mark.usefixtures("gpx_path", "db")
 class TestDb:
     def test_insert_user(self, db):
-        cursor = db.get_cursor()
+        cursor = db.cursor
         userid = gpx2spatialite.insert_user(cursor, "testuser2")
 
         assert userid == 2
@@ -17,7 +17,7 @@ class TestDb:
         assert username == "testuser2"
 
     def test_enterfile(self, gpx_path, db):
-        cursor = db.get_cursor()
+        cursor = db.cursor
         extracted_pts = gpx2spatialite.extractpoints(gpx_path, skip_wpts=True)
 
         gpx2spatialite.enterfile(gpx_path, cursor, 1,
@@ -31,7 +31,7 @@ class TestDb:
         assert test_file_row[1] == os.path.basename(gpx_path)
 
     def get_file_and_user(self, gpx_path, db):
-        cursor = db.get_cursor()
+        cursor = db.cursor
         md5 = gpx2spatialite.getmd5(os.path.expanduser(gpx_path))
 
         sql = "select * from files where md5hash = '%s'" % md5
@@ -41,7 +41,7 @@ class TestDb:
         return file_row[0], file_row[6]
 
     def test_entertrackpoints(self, gpx_path, db):
-        cursor = db.get_cursor()
+        cursor = db.cursor
         extracted_pts = gpx2spatialite.extractpoints(gpx_path)
 
         fileid, userid = self.get_file_and_user(gpx_path, db)
@@ -69,7 +69,7 @@ class TestDb:
         assert trkpt_rows[1][12] == "POINT(13.45717 52.511357)"
 
     def test_entertracklines(self, gpx_path, db):
-        cursor = db.get_cursor()
+        cursor = db.cursor
         extracted_pts = gpx2spatialite.extractpoints(gpx_path)
 
         fileid, userid = self.get_file_and_user(gpx_path, db)
@@ -94,7 +94,7 @@ class TestDb:
         assert trklines_rows[0][9] == 1
 
     def test_enterwaypoints(self, gpx_path, db):
-        cursor = db.get_cursor()
+        cursor = db.cursor
         extracted_wpts = gpx2spatialite.extractpoints(gpx_path)
 
         fileid, userid = self.get_file_and_user(gpx_path, db)

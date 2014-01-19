@@ -86,9 +86,6 @@ class Db:
         self.conn.close()
         # call(["rm", db_path])
 
-    def get_cursor(self):
-        return self.cursor
-
 
 @pytest.fixture(scope='module')
 def db(request):
