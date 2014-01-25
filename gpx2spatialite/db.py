@@ -94,7 +94,7 @@ def insert_segments(cursor, segment_uuids):
     return segments_dict
 
 
-def enterpoints(cursor, user, trkpts, segments_dict, file_uid):
+def enterpoints(cursor, user, trkpts, file_uid, segments_dict):
     """
     Enters points in the spatially enabled 'trackpoints' table
 
@@ -150,7 +150,7 @@ def enterpoints(cursor, user, trkpts, segments_dict, file_uid):
                                                                        err))
 
 
-def enterlines(cursor, user, trklines, segments_dict, file_uid):
+def enterlines(cursor, user, trklines, file_uid, segments_dict):
     """
     trackline columns: trkline_uid, trksegid_fm_trkpts, name, cmt,
     timestamp_start, timestamp_end, length_m, time_sec, speed_kph,

@@ -46,7 +46,7 @@ class TestDb:
 
         fileid, userid = self.get_file_and_user(gpx_path, db)
         gpx2spatialite.enterpoints(cursor, userid, extracted_pts[0],
-                                   None, fileid)
+                                   fileid, None)
 
         sql = "select *, astext(geom) from trackpoints"
         res = cursor.execute(sql)
@@ -74,7 +74,7 @@ class TestDb:
 
         fileid, userid = self.get_file_and_user(gpx_path, db)
         gpx2spatialite.enterlines(cursor, userid, extracted_pts[1],
-                                  None, fileid)
+                                  fileid, None)
 
         sql = "select *, astext(geom) from tracklines"
         res = cursor.execute(sql)

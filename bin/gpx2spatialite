@@ -176,10 +176,10 @@ def main():
         file_uid = g2s.get_currentfileid(cursor)
 
         # print "Entering points into database"
-        g2s.enterpoints(cursor, userid, trkpts, seg_dict, file_uid)
+        g2s.enterpoints(cursor, userid, trkpts, file_uid, seg_dict)
 
         # print "Entering lines into database"
-        g2s.enterlines(cursor, userid, trklines, seg_dict, file_uid)
+        g2s.enterlines(cursor, userid, trklines, file_uid, seg_dict)
 
         # print entering waypoints into database
         g2s.enterwaypoints(cursor, userid, wpts, file_uid)
