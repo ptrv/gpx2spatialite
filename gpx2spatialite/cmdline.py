@@ -19,6 +19,24 @@ import os.path
 import glob
 
 
+print_verbose = True
+
+
+def set_print_verbose(is_verbose):
+    global print_verbose
+    print_verbose = is_verbose
+
+
+def print_cmdline(msg):
+    """Print msg to cmdline"""
+    # print print_verbose
+
+    if print_verbose:
+        print(msg)
+    else:
+        pass
+
+
 def checkfile(filepath):
     """
     Checks if file or folder exists at location
@@ -31,6 +49,9 @@ def checkadd(username):
     A name has been entered that is not in database. Ask if a new name
     should be added
     """
+    if not print_verbose:
+        return True
+
     while True:
         question = ('Do you want to add {0} as a new user? y or n '
                     .format(username))

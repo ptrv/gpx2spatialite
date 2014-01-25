@@ -60,6 +60,12 @@ def parseargs():
                          action="store_true",
                          help="Skip querying locations for points (faster)")
 
+    optparser.add_option('-q',
+                         '--quite',
+                         dest='quite',
+                         default=False,
+                         action='store_true')
+
     (options, args) = optparser.parse_args()
 
     update_locs = options.update_locs
@@ -74,8 +80,10 @@ def parseargs():
 
     dbpath = os.path.expanduser(options.dbasepath)
 
+    quite = options.quite
+
     if update_locs is True:
-        return None, None, dbpath, None, True
+        return None, None, dbpath, None, True, quite
 
     if len(args) < 1:
         print_option_missing_and_exit()
@@ -95,7 +103,7 @@ def parseargs():
 
     skip_locs = options.skip_locs
 
-    return filepaths, user, dbpath, skip_locs, False
+    return filepaths, user, dbpath, skip_locs, False, quite
 
 
 def main():
@@ -106,7 +114,9 @@ def main():
     # for timing (rough)
     starttime = datetime.now()
 
-    filepaths, username, dbpath, skip_locs, update_locs = parseargs()
+    filepaths, username, dbpath, skip_locs, update_locs, quite = parseargs()
+
+    g2s.set_print_verbose(not quite)
 
     conn = g2s.get_connection(dbpath)
     cursor = conn.cursor()
@@ -116,7 +126,7 @@ def main():
         sys.exit(0)
 
     gpx_filepaths = g2s.read_filepaths(filepaths, ".gpx")
-    print("\nFound {0} .gpx files.\n".format(len(gpx_filepaths)))
+    g2s.print_cmdline("\nFound {0} .gpx files.\n".format(len(gpx_filepaths)))
 
     if len(gpx_filepaths) == 0:
         print "No input files!"
@@ -126,7 +136,8 @@ def main():
     if userid == -1:
         # user name is not in database - ask to add
         if g2s.checkadd(username):
-            print("User {0} sucessfully added to database".format(username))
+            msg = "User {0} sucessfully added to database".format(username)
+            g2s.print_cmdline(msg)
             userid = g2s.insert_user(cursor, username)
             conn.commit()
         else:
@@ -142,12 +153,12 @@ def main():
 
     for filepath in gpx_filepaths:
         if g2s.check_if_gpxfile_exists(cursor, filepath) is True:
-            print("File {0} already in database".format(filepath))
+            g2s.print_cmdline("File {0} already in database".format(filepath))
             continue
 
         parsing_starttimep = datetime.now()
-        print("#" * 48)
-        print("Parsing points in {0}".format(filepath))
+        g2s.print_cmdline("#" * 48)
+        g2s.print_cmdline("Parsing points in {0}".format(filepath))
 
         trkpts, trklines, firsttimestamp, lasttimestamp, wpts, seg_uuids = \
             g2s.extractpoints(filepath, get_loc_func, False)
@@ -156,18 +167,18 @@ def main():
 
         dbg_str = "File first timestamp: {0}, ".format(firsttimestamp)
         dbg_str += "last timestamp: {0}".format(lasttimestamp)
-        print(dbg_str)
+        g2s.print_cmdline(dbg_str)
 
         if firsttimestamp == 0 or lasttimestamp == 0:
             continue
-            print("Skipping importing {0}.".format(filepath))
+            g2s.print_cmdline("Skipping importing {0}.".format(filepath))
 
         parsing_endtime = datetime.now()
         dbg_str = "\nParsing {0} points and {1} waypoints ".format(len(trkpts),
                                                                    len(wpts))
         dbg_str += "from gpx file took {0}".format(parsing_endtime -
                                                    parsing_starttimep)
-        print(dbg_str)
+        g2s.print_cmdline(dbg_str)
 
         db_starttime = datetime.now()
         # print "Entering file into database"
@@ -187,15 +198,16 @@ def main():
         conn.commit()
 
         db_endtime = datetime.now()
-        print("Entering into database took {0}".format(db_endtime -
-                                                       db_starttime))
+        msg = "Entering into database took {0}".format(db_endtime -
+                                                       db_starttime)
+        g2s.print_cmdline(msg)
 
     cursor.close()
     conn.close()
 
     endtime = datetime.now()
-    print("#" * 48)
-    print("Script took {0}\n".format(endtime - starttime))
+    g2s.print_cmdline("#" * 48)
+    g2s.print_cmdline("Script took {0}\n".format(endtime - starttime))
 
 if __name__ == '__main__':
     sys.exit(main())
