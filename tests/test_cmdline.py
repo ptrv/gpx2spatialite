@@ -41,5 +41,9 @@ class TestCmdline:
         actual = gpx2spatialite.read_filepaths(input_path, ".gpx")
         assert [] == actual
 
-    def test_checkfile(self, gpx_path):
+    def test_checkfile(self, gpx_path, dummy_files):
+        tmp_dir = dummy_files['dir']
+
         assert gpx2spatialite.checkfile(gpx_path)
+        assert gpx2spatialite.checkfile(tmp_dir)
+        assert gpx2spatialite.checkfile('nonexistent-file') is False
