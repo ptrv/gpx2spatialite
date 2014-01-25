@@ -149,14 +149,10 @@ def main():
         print("#" * 48)
         print("Parsing points in {0}".format(filepath))
 
-        last_seg_num = g2s.get_lasttrkseg(cursor)
-        trkpts, trklines, firsttimestamp, lasttimestamp, wpts, segs = \
-            g2s.extractpoints(filepath, last_seg_num, get_loc_func, False)
+        trkpts, trklines, firsttimestamp, lasttimestamp, wpts, seg_uuids = \
+            g2s.extractpoints(filepath, get_loc_func, False)
 
-        for segment in segs:
-            seg_id = segment[0]
-            seg_uuid = segment[1]
-            g2s.insert_segment(cursor, seg_id, seg_uuid)
+        seg_dict = g2s.insert_segments(cursor, seg_uuids)
 
         dbg_str = "File first timestamp: {0}, ".format(firsttimestamp)
         dbg_str += "last timestamp: {0}".format(lasttimestamp)
@@ -180,10 +176,10 @@ def main():
         file_uid = g2s.get_currentfileid(cursor)
 
         # print "Entering points into database"
-        g2s.enterpoints(cursor, userid, trkpts, file_uid)
+        g2s.enterpoints(cursor, userid, trkpts, seg_dict, file_uid)
 
         # print "Entering lines into database"
-        g2s.enterlines(cursor, userid, trklines, file_uid)
+        g2s.enterlines(cursor, userid, trklines, seg_dict, file_uid)
 
         # print entering waypoints into database
         g2s.enterwaypoints(cursor, userid, wpts, file_uid)

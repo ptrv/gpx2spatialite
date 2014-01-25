@@ -48,8 +48,7 @@ def get_gpx_file(file_path):
         sys.exit(2)
 
 
-def extractpoints(filepath, last_segment_num=-1, get_loc_func=None,
-                  skip_wpts=False):
+def extractpoints(filepath, get_loc_func=None, skip_wpts=False):
     """
     parse the gpx file using gpxpy and return a list of lines
 
@@ -77,14 +76,11 @@ def extractpoints(filepath, last_segment_num=-1, get_loc_func=None,
 
     firsttimestamp, lasttimestamp = gpx.get_time_bounds()
 
-    lastseg = last_segment_num
-
     for track in gpx.tracks:
         for segment in track.segments:
             if segment.get_points_no() > 1:
                 seg_uuid = uuid.uuid4()
-                lastseg += 1
-                segs.append([lastseg, seg_uuid])
+                segs.append(seg_uuid)
                 trksegpt_id = 0
                 pts_strs = []
                 lastpoint = None
@@ -122,7 +118,7 @@ def extractpoints(filepath, last_segment_num=-1, get_loc_func=None,
                     else:
                         loc = -1
 
-                    ptline = [lastseg, trksegpt_id, ele, time,
+                    ptline = [seg_uuid, trksegpt_id, ele, time,
                               course, speed, loc, geom_str]
 
                     trkpts.append(ptline)
@@ -140,7 +136,7 @@ def extractpoints(filepath, last_segment_num=-1, get_loc_func=None,
                 linestr = "LINESTRING("
                 linestr += ",".join(pts_strs)
                 linestr += ")"
-                trkline = [lastseg, timestamp_start, timestamp_end,
+                trkline = [seg_uuid, timestamp_start, timestamp_end,
                            length_m, time_sec, speed_kph, linestr]
                 trklines.append(trkline)
             else:

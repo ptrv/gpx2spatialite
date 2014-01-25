@@ -81,7 +81,20 @@ def get_lasttrkseg(cursor):
     return lasttrkseg
 
 
-def enterpoints(cursor, user, trkpts, file_uid):
+def insert_segments(cursor, segment_uuids):
+    """
+    Insert segment uuids and return a dictionary with uuid and table uid
+    association
+    """
+    segments_dict = {}
+    for seg_uuid in segment_uuids:
+        insert_segment(cursor, seg_uuid)
+        segments_dict[seg_uuid] = get_lasttrkseg(cursor)
+
+    return segments_dict
+
+
+def enterpoints(cursor, user, trkpts, segments_dict, file_uid):
     """
     Enters points in the spatially enabled 'trackpoints' table
 
@@ -92,13 +105,21 @@ def enterpoints(cursor, user, trkpts, file_uid):
     trkpts = trkseg_id, trksegpt_id, ele, time, course, speed, loc, geom
     """
     for line in trkpts:
-        trkseg_id, trksegpt_id, ele, time, course, speed, loc, geom = line
+        trkseg_uuid, trksegpt_id, ele, time, course, speed, loc, geom = line
+
+        trkseg_uid = -1
+        if segments_dict is not None:
+            try:
+                trkseg_uid = segments_dict[trkseg_uuid]
+            except KeyError:
+                pass
+
         if loc == -1:
             sql = "INSERT INTO trackpoints (trkseg_id, trksegpt_id, "
             sql += "ele, utctimestamp, course, speed, "
             sql += "file_uid, user_uid, geom) "
             sql += "VALUES ({0}, {1}, {2}, '{3}', {4}, {5}, {6}, {7}, "\
-                "GeomFromText('{8}', 4326))".format(trkseg_id,
+                "GeomFromText('{8}', 4326))".format(trkseg_uid,
                                                     trksegpt_id,
                                                     ele,
                                                     time,
@@ -112,7 +133,7 @@ def enterpoints(cursor, user, trkpts, file_uid):
             sql += "ele, utctimestamp, course, speed, "
             sql += "file_uid, user_uid, citydef_uid, geom) "
             sql += "VALUES ({0}, {1}, {2}, '{3}', {4}, {5}, {6}, {7}, "\
-                "{8}, GeomFromText('{9}', 4326))".format(trkseg_id,
+                "{8}, GeomFromText('{9}', 4326))".format(trkseg_uid,
                                                          trksegpt_id,
                                                          ele,
                                                          time,
@@ -129,7 +150,7 @@ def enterpoints(cursor, user, trkpts, file_uid):
                                                                        err))
 
 
-def enterlines(cursor, user, trklines, file_uid):
+def enterlines(cursor, user, trklines, segments_dict, file_uid):
     """
     trackline columns: trkline_uid, trksegid_fm_trkpts, name, cmt,
     timestamp_start, timestamp_end, length_m, time_sec, speed_kph,
@@ -139,13 +160,21 @@ def enterlines(cursor, user, trklines, file_uid):
                length_m, time_sec, speed_kph, linestr]
     """
     for line in trklines:
-        (trkseg_id, timestamp_start, timestamp_end, length_m, time_sec,
+        (trkseg_uuid, timestamp_start, timestamp_end, length_m, time_sec,
          speed_kph, linestr) = line
+
+        trkseg_uid = -1
+        if segments_dict is not None:
+            try:
+                trkseg_uid = segments_dict[trkseg_uuid]
+            except KeyError:
+                pass
+
         sql = "INSERT INTO tracklines (trkseg_id, timestamp_start, "
         sql += "timestamp_end, length_m, time_sec, speed_kph, "
         sql += "file_uid, user_uid, geom) VALUES "
         sql += "({0}, '{1}', '{2}', {3}, {4}, {5}, {6}, {7},"\
-            " GeomFromText('{8}', 4326))".format(trkseg_id,
+            " GeomFromText('{8}', 4326))".format(trkseg_uid,
                                                  timestamp_start,
                                                  timestamp_end,
                                                  length_m,
@@ -182,15 +211,15 @@ def enterwaypoints(cursor, user, waypoints, file_uid):
         cursor.execute(sql)
 
 
-def insert_segment(cursor, seg_id, seg_uuid):
+def insert_segment(cursor, seg_uuid):
     """
     Insert a tracksegment into the database.
 
     Arguments:
     - `seg_uuid`: uuid of segment
     """
-    sql = "INSERT INTO tracksegments (trkseg_uid, trkseg_uuid) VALUES"
-    sql += "({0}, '{1}')".format(seg_id, seg_uuid)
+    sql = "INSERT INTO tracksegments (trkseg_uuid) VALUES"
+    sql += "('{0}')".format(seg_uuid)
     cursor.execute(sql)
 
 

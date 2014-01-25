@@ -45,8 +45,8 @@ class TestDb:
         extracted_pts = gpx2spatialite.extractpoints(gpx_path)
 
         fileid, userid = self.get_file_and_user(gpx_path, db)
-        gpx2spatialite.enterpoints(cursor, userid,
-                                   extracted_pts[0], fileid)
+        gpx2spatialite.enterpoints(cursor, userid, extracted_pts[0],
+                                   None, fileid)
 
         sql = "select *, astext(geom) from trackpoints"
         res = cursor.execute(sql)
@@ -56,7 +56,7 @@ class TestDb:
         assert len(trkpt_rows) == 4
 
         assert trkpt_rows[1][0] == 2
-        assert trkpt_rows[1][1] == 0
+        assert trkpt_rows[1][1] == -1
         assert trkpt_rows[1][2] == 1
         assert trkpt_rows[1][3] == 65.51
         assert trkpt_rows[1][4] == "2012-03-17 12:46:44"
@@ -73,8 +73,8 @@ class TestDb:
         extracted_pts = gpx2spatialite.extractpoints(gpx_path)
 
         fileid, userid = self.get_file_and_user(gpx_path, db)
-        gpx2spatialite.enterlines(cursor, userid,
-                                  extracted_pts[1], fileid)
+        gpx2spatialite.enterlines(cursor, userid, extracted_pts[1],
+                                  None, fileid)
 
         sql = "select *, astext(geom) from tracklines"
         res = cursor.execute(sql)
@@ -83,7 +83,7 @@ class TestDb:
         assert len(trklines_rows) == 1
 
         assert trklines_rows[0][0] == 1
-        assert trklines_rows[0][1] == 0
+        assert trklines_rows[0][1] == -1
         assert trklines_rows[0][2] is None
         assert trklines_rows[0][3] == "2012-03-17 12:46:19"
         assert trklines_rows[0][4] == "2012-03-17 12:47:23"
