@@ -114,12 +114,16 @@ def main():
     # for timing (rough)
     starttime = datetime.now()
 
+    # -------------------------------------------------------------------------
+
     filepaths, username, dbpath, skip_locs, update_locs, quite = parseargs()
 
     g2s.set_print_verbose(not quite)
 
     conn = g2s.get_connection(dbpath)
     cursor = conn.cursor()
+
+    # -------------------------------------------------------------------------
 
     if update_locs is True:
         num_unknown, num_updated = g2s.update_locations(conn)
@@ -128,12 +132,16 @@ def main():
         g2s.print_cmdline(msg)
         sys.exit(0)
 
+    # -------------------------------------------------------------------------
+
     gpx_filepaths = g2s.read_filepaths(filepaths, ".gpx")
     g2s.print_cmdline("\nFound {0} .gpx files.\n".format(len(gpx_filepaths)))
 
     if len(gpx_filepaths) == 0:
         print "No input files!"
         sys.exit(1)
+
+    # -------------------------------------------------------------------------
 
     userid = g2s.get_user_id(cursor, username)
     if userid == -1:
@@ -149,41 +157,58 @@ def main():
             conn.close()
             sys.exit(1)
 
-    if skip_locs:
-        get_loc_func = None
-    else:
-        get_loc_func = g2s.get_location_func(cursor)
+    # -------------------------------------------------------------------------
+
+    get_loc_func = None if skip_locs else g2s.get_location_func(cursor)
+
+    # -------------------------------------------------------------------------
 
     for filepath in gpx_filepaths:
+
+        # ---------------------------------------------------------------------
+
         if g2s.check_if_gpxfile_exists(cursor, filepath) is True:
             g2s.print_cmdline("File {0} already in database".format(filepath))
             continue
+
+        # ---------------------------------------------------------------------
 
         parsing_starttimep = datetime.now()
         g2s.print_cmdline("#" * 48)
         g2s.print_cmdline("Parsing points in {0}".format(filepath))
 
+        # ---------------------------------------------------------------------
+
         trkpts, trklines, firsttimestamp, lasttimestamp, wpts, seg_uuids = \
             g2s.extractpoints(filepath, get_loc_func, False)
 
+        # ---------------------------------------------------------------------
+
         seg_dict = g2s.insert_segments(cursor, seg_uuids)
 
-        dbg_str = "File first timestamp: {0}, ".format(firsttimestamp)
-        dbg_str += "last timestamp: {0}".format(lasttimestamp)
-        g2s.print_cmdline(dbg_str)
+        # ---------------------------------------------------------------------
+
+        msg = "File first timestamp: {0}, ".format(firsttimestamp)
+        msg += "last timestamp: {0}".format(lasttimestamp)
+        g2s.print_cmdline(msg)
 
         if firsttimestamp == 0 or lasttimestamp == 0:
             continue
             g2s.print_cmdline("Skipping importing {0}.".format(filepath))
 
+        # ---------------------------------------------------------------------
+
         parsing_endtime = datetime.now()
-        dbg_str = "\nParsing {0} points and {1} waypoints ".format(len(trkpts),
-                                                                   len(wpts))
-        dbg_str += "from gpx file took {0}".format(parsing_endtime -
-                                                   parsing_starttimep)
-        g2s.print_cmdline(dbg_str)
+        msg = "\nParsing {0} points and {1} waypoints ".format(len(trkpts),
+                                                               len(wpts))
+        msg += "from gpx file took {0}".format(parsing_endtime -
+                                               parsing_starttimep)
+        g2s.print_cmdline(msg)
+
+        # ---------------------------------------------------------------------
 
         db_starttime = datetime.now()
+
         # print "Entering file into database"
         g2s.enterfile(filepath, cursor, userid, firsttimestamp, lasttimestamp)
 
@@ -198,12 +223,17 @@ def main():
         # print entering waypoints into database
         g2s.enterwaypoints(cursor, userid, wpts, file_uid)
 
+        # ---------------------------------------------------------------------
+
         conn.commit()
 
+        # ---------------------------------------------------------------------
         db_endtime = datetime.now()
         msg = "Entering into database took {0}".format(db_endtime -
                                                        db_starttime)
         g2s.print_cmdline(msg)
+
+        # ---------------------------------------------------------------------
 
     cursor.close()
     conn.close()

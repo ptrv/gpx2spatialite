@@ -59,7 +59,7 @@ def checkadd(username):
         answer = answer.lower()
         if answer in ('y', 'yes'):
             return True
-        if answer in ('n', 'no'):
+        elif answer in ('n', 'no'):
             return False
         else:
             print("Please answer y or n")
