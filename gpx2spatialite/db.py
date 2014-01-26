@@ -253,8 +253,6 @@ def update_locations(connection):
     res = cur.execute(sql)
     unknowns = res.fetchall()
 
-    print("{0} trackpoints with unknown location".format(len(unknowns)))
-
     num_updated = 0
     for row in unknowns:
         sql = "select * from citydefs where within("
@@ -272,10 +270,10 @@ def update_locations(connection):
             cur.execute(sql)
             num_updated += 1
 
-    print("updated {0} trackpoints".format(num_updated))
-
     cur.close()
     connection.commit()
+
+    return len(unknowns), num_updated
 
 
 def check_if_gpxfile_exists(cursor, filepath):

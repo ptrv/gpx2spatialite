@@ -122,7 +122,10 @@ def main():
     cursor = conn.cursor()
 
     if update_locs is True:
-        g2s.update_locations(conn)
+        num_unknown, num_updated = g2s.update_locations(conn)
+        msg = "{0} trackpoints with unknown location\n".format(num_unknown)
+        msg += "{0} trackpoints updated".format(num_updated)
+        g2s.print_cmdline(msg)
         sys.exit(0)
 
     gpx_filepaths = g2s.read_filepaths(filepaths, ".gpx")
