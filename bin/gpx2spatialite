@@ -46,7 +46,7 @@ def parseargs():
                          metavar="NAME",
                          help="User name (mandatory option)")
 
-    optparser.add_option("--updatelocations",
+    optparser.add_option("--update-locations",
                          dest="update_locs",
                          default=False,
                          action="store_true",
@@ -54,7 +54,7 @@ def parseargs():
 (<username>, <gpxfile> not needed)")
 
     optparser.add_option("-s",
-                         "--skiplocations",
+                         "--skip-locations",
                          dest="skip_locs",
                          default=False,
                          action="store_true",
