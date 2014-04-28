@@ -46,13 +46,6 @@ def parseargs():
                          metavar="NAME",
                          help="User name (mandatory option)")
 
-    optparser.add_option("--update-locations",
-                         dest="update_locs",
-                         default=False,
-                         action="store_true",
-                         help="Update locations for points \
-(<username>, <gpxfile> not needed)")
-
     optparser.add_option("-s",
                          "--skip-locations",
                          dest="skip_locs",
@@ -68,8 +61,6 @@ def parseargs():
 
     (options, args) = optparser.parse_args()
 
-    update_locs = options.update_locs
-
     def print_option_missing_and_exit():
         print('\nError: mandatory option is missing\n')
         optparser.print_usage()
@@ -81,9 +72,6 @@ def parseargs():
     dbpath = os.path.expanduser(options.dbasepath)
 
     quite = options.quite
-
-    if update_locs is True:
-        return None, None, dbpath, None, True, quite
 
     if len(args) < 1:
         print_option_missing_and_exit()
@@ -103,7 +91,7 @@ def parseargs():
 
     skip_locs = options.skip_locs
 
-    return filepaths, user, dbpath, skip_locs, False, quite
+    return filepaths, user, dbpath, skip_locs, quite
 
 
 def main():
@@ -116,21 +104,12 @@ def main():
 
     # -------------------------------------------------------------------------
 
-    filepaths, username, dbpath, skip_locs, update_locs, quite = parseargs()
+    filepaths, username, dbpath, skip_locs, quite = parseargs()
 
     g2s.set_print_verbose(not quite)
 
     conn = g2s.get_connection(dbpath)
     cursor = conn.cursor()
-
-    # -------------------------------------------------------------------------
-
-    if update_locs is True:
-        num_unknown, num_updated = g2s.update_locations(conn)
-        msg = "{0} trackpoints with unknown location\n".format(num_unknown)
-        msg += "{0} trackpoints updated".format(num_updated)
-        g2s.print_cmdline(msg)
-        sys.exit(0)
 
     # -------------------------------------------------------------------------
 
