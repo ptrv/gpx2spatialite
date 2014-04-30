@@ -13,9 +13,17 @@ tracklines to a database (SQL for database below)
 Usage
 -----
 
-Run the script::
+It is possible to read in single files::
 
   gpx2spatialite -d <path/to/database> -u <user_id> <path/to/gpx>
+
+Or multiple folders::
+
+  gpx2spatialite -d <path/to/database> -u <user_id> <path/to/folder1> <path/to/folder2>
+
+Files and folders can be specified both at the same time::
+
+  gpx2spatialite -d <path/to/database> -u <user_id> <path/to/folder1> <path/to/gpx>
 
 
 Create a new database
