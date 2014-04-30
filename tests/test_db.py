@@ -115,3 +115,12 @@ class TestDb:
         assert wpt_row[6] == 1
         assert wpt_row[7] is None
         assert wpt_row[9] == "POINT(-121.17042 37.085751)"
+
+    def test_check_if_table_exists(self, db):
+        table_exists = gpx2spatialite \
+            .check_if_table_exists(db.conn, "users")
+        assert table_exists is True
+
+        table_exists = gpx2spatialite \
+            .check_if_table_exists(db.conn, "users-not-existing")
+        assert table_exists is False

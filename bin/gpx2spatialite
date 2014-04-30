@@ -143,6 +143,14 @@ def main():
 
     # -------------------------------------------------------------------------
 
+    if not g2s.check_if_table_exists(conn, "users"):
+        print("Unable to find database table \"users\".")
+        print("Use `gpx2spatialite_create_db` to create \
+the database beforehand.")
+        cursor.close()
+        conn.close()
+        sys.exit(1)
+
     userid = g2s.get_user_id(cursor, username)
     if userid == -1:
         # user name is not in database - ask to add

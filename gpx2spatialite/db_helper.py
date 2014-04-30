@@ -53,3 +53,19 @@ def init_spatial_metadata(connection):
             connection.execute(query)
     except spatialite.Error as err:
         print('SQL Error: ' + str(err))
+
+
+def check_if_table_exists(connection, table_name):
+    """
+    Returns True if table exists otherwise False
+    """
+    if connection is None:
+        raise "Invalid connection"
+
+    if table_name is None or len(table_name) < 1:
+        raise "Invalid table name"
+
+    sql = "SELECT count(*) FROM sqlite_master "
+    sql += "WHERE name='{0}' and type='table'"
+    cursor = connection.execute(sql.format(table_name))
+    return True if int(cursor.fetchone()[0]) > 0 else False
