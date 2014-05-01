@@ -49,6 +49,9 @@ Export citydefs table::
 Unit tests
 ----------
 
+The repository contains the standalone py.test (version 2.5.2) script
+`runtests.py`.
+
 Run the following command to run the tests::
 
   python setup.py test
