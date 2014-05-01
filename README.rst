@@ -53,6 +53,14 @@ Run the following command to run the tests::
 
   python setup.py test
 
+
+Dependencies
+------------
+
+* gpxpy
+* sqlite library with loading extension support or pyspatialite
+
+
 ..
 
    Local Variables:
