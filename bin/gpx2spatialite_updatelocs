@@ -30,7 +30,7 @@ def parseargs():
                          default=False,
                          action="store_true",
                          help="Scan all points and reset location,\
-    not just unknown ones")
+not just unknown ones")
 
     (options, args) = optparser.parse_args()
     if len(args) != 1:
