@@ -61,8 +61,8 @@ def parseargs():
                          help="Skip querying locations for points (faster)")
 
     optparser.add_option('-q',
-                         '--quite',
-                         dest='quite',
+                         '--quiet',
+                         dest='quiet',
                          default=False,
                          action='store_true')
 
@@ -80,10 +80,10 @@ def parseargs():
 
     dbpath = os.path.expanduser(options.dbasepath)
 
-    quite = options.quite
+    quiet = options.quiet
 
     if update_locs is True:
-        return None, None, dbpath, None, True, quite
+        return None, None, dbpath, None, True, quiet
 
     if len(args) < 1:
         print_option_missing_and_exit()
@@ -103,7 +103,7 @@ def parseargs():
 
     skip_locs = options.skip_locs
 
-    return filepaths, user, dbpath, skip_locs, False, quite
+    return filepaths, user, dbpath, skip_locs, False, quiet
 
 
 def main():
@@ -116,9 +116,9 @@ def main():
 
     # -------------------------------------------------------------------------
 
-    filepaths, username, dbpath, skip_locs, update_locs, quite = parseargs()
+    filepaths, username, dbpath, skip_locs, update_locs, quiet = parseargs()
 
-    g2s.set_print_verbose(not quite)
+    g2s.set_print_verbose(not quiet)
 
     conn = g2s.get_connection(dbpath)
     cursor = conn.cursor()
