@@ -13,9 +13,17 @@ tracklines to a database (SQL for database below)
 Usage
 -----
 
-Run the script::
+It is possible to read in single files::
 
   gpx2spatialite -d <path/to/database> -u <user_id> <path/to/gpx>
+
+Or multiple folders::
+
+  gpx2spatialite -d <path/to/database> -u <user_id> <path/to/folder1> <path/to/folder2>
+
+Files and folders can be specified both at the same time::
+
+  gpx2spatialite -d <path/to/database> -u <user_id> <path/to/folder1> <path/to/gpx>
 
 
 Create a new database
@@ -41,9 +49,20 @@ Export citydefs table::
 Unit tests
 ----------
 
+The repository contains the standalone py.test (version 2.5.2) script
+`runtests.py`.
+
 Run the following command to run the tests::
 
   python setup.py test
+
+
+Dependencies
+------------
+
+* gpxpy
+* sqlite library with loading extension support or pyspatialite
+
 
 ..
 

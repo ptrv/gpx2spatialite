@@ -1,5 +1,6 @@
-# Copyright (C) 2013, 2014  Daniel Belasco Rogers <http://planbperformance.net/dan>,
-#                           Peter Vasil <mail@petervasil.net>
+# Copyright (C) 2013, 2014
+# Daniel Belasco Rogers <http://planbperformance.net/dan>,
+# Peter Vasil <mail@petervasil.net>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
