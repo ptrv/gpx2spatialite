@@ -34,12 +34,12 @@ def enterfile(filepath, cursor, user, firsttimestamp, lasttimestamp):
     date_entered = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # build sql
-    sql = "INSERT INTO files (file_uid, filename, "
-    sql += "md5hash, date_entered, first_timestamp, last_timestamp, user_uid) "
-    sql += "VALUES ("
-    sql += "NULL, '{0}', '{1}', '{2}', '{3}', '{4}', "\
-           "{5});".format(filename, md5hash, date_entered, firsttimestamp,
-                          lasttimestamp, user)
+    sql = ("INSERT INTO files (file_uid, filename, "
+           "md5hash, date_entered, first_timestamp, last_timestamp, user_uid) "
+           "VALUES (NULL, '{0}', '{1}', '{2}', '{3}', '{4}', {5});")
+
+    sql = sql.format(filename, md5hash, date_entered, firsttimestamp,
+                     lasttimestamp, user)
 
     # execute insert checking whether the file has already been
     # entered
@@ -59,8 +59,7 @@ def get_currentfileid(cursor):
     """
     query the database for the id number of the file just entered
     """
-    sql = "SELECT seq FROM sqlite_sequence "
-    sql += "WHERE name = 'files'"
+    sql = "SELECT seq FROM sqlite_sequence WHERE name = 'files'"
     cursor.execute(sql)
     file_uid = cursor.fetchone()[0]
 
@@ -71,8 +70,8 @@ def get_lasttrkseg(cursor):
     """
     query the database for the last trkseg_id
     """
-    sql = "SELECT trkseg_uid FROM tracksegments "
-    sql += "ORDER BY trkseg_uid DESC LIMIT 1"
+    sql = ("SELECT trkseg_uid FROM tracksegments "
+           "ORDER BY trkseg_uid DESC LIMIT 1")
     cursor.execute(sql)
     try:
         lasttrkseg = cursor.fetchone()[0]
@@ -116,39 +115,29 @@ def enterpoints(cursor, user, trkpts, file_uid, segments_dict):
                 pass
 
         if loc == -1:
-            sql = "INSERT INTO trackpoints (trkseg_id, trksegpt_id, "
-            sql += "ele, utctimestamp, course, speed, "
-            sql += "file_uid, user_uid, geom) "
-            sql += "VALUES ({0}, {1}, {2}, '{3}', {4}, {5}, {6}, {7}, "\
-                "GeomFromText('{8}', 4326))".format(trkseg_uid,
-                                                    trksegpt_id,
-                                                    ele,
-                                                    time,
-                                                    course,
-                                                    speed,
-                                                    file_uid,
-                                                    user,
-                                                    geom)
+            sql = ("INSERT INTO trackpoints (trkseg_id, trksegpt_id, "
+                   "ele, utctimestamp, course, speed, file_uid, user_uid, "
+                   "geom) VALUES ({0}, {1}, {2}, '{3}', {4}, {5}, {6}, {7}, "
+                   "GeomFromText('{8}', 4326))")
+
+            sql = sql.format(trkseg_uid, trksegpt_id, ele, time, course,
+                             speed, file_uid, user, geom)
+
         else:
-            sql = "INSERT INTO trackpoints (trkseg_id, trksegpt_id, "
-            sql += "ele, utctimestamp, course, speed, "
-            sql += "file_uid, user_uid, citydef_uid, geom) "
-            sql += "VALUES ({0}, {1}, {2}, '{3}', {4}, {5}, {6}, {7}, "\
-                "{8}, GeomFromText('{9}', 4326))".format(trkseg_uid,
-                                                         trksegpt_id,
-                                                         ele,
-                                                         time,
-                                                         course,
-                                                         speed,
-                                                         file_uid,
-                                                         user,
-                                                         loc,
-                                                         geom)
+
+            sql = ("INSERT INTO trackpoints (trkseg_id, trksegpt_id, "
+                   "ele, utctimestamp, course, speed, file_uid, user_uid, "
+                   "citydef_uid, geom)VALUES ({0}, {1}, {2}, '{3}', {4}, {5}, "
+                   "{6}, {7}, {8}, GeomFromText('{9}', 4326))")
+
+            sql = sql.format(trkseg_uid, trksegpt_id, ele, time, course,
+                             speed, file_uid, user, loc, geom)
+
         try:
             cursor.execute(sql)
         except spatialite.IntegrityError as err:
-            print("Not importing duplicate point from {0}: {1}".format(time,
-                                                                       err))
+            msg = "Not importing duplicate point from {0}: {1}"
+            print(msg.format(time, err))
 
 
 def enterlines(cursor, user, trklines, file_uid, segments_dict):
@@ -171,19 +160,14 @@ def enterlines(cursor, user, trklines, file_uid, segments_dict):
             except KeyError:
                 pass
 
-        sql = "INSERT INTO tracklines (trkseg_id, timestamp_start, "
-        sql += "timestamp_end, length_m, time_sec, speed_kph, "
-        sql += "file_uid, user_uid, geom) VALUES "
-        sql += "({0}, '{1}', '{2}', {3}, {4}, {5}, {6}, {7},"\
-            " GeomFromText('{8}', 4326))".format(trkseg_uid,
-                                                 timestamp_start,
-                                                 timestamp_end,
-                                                 length_m,
-                                                 time_sec,
-                                                 speed_kph,
-                                                 file_uid,
-                                                 user,
-                                                 linestr)
+        sql = ("INSERT INTO tracklines (trkseg_id, timestamp_start, "
+               "timestamp_end, length_m, time_sec, speed_kph, file_uid, "
+               "user_uid, geom) VALUES({0}, '{1}', '{2}', {3}, {4}, {5}, "
+               "{6}, {7}, GeomFromText('{8}', 4326))")
+
+        sql = sql.format(trkseg_uid, timestamp_start, timestamp_end, length_m,
+                         time_sec, speed_kph, file_uid, user, linestr)
+
         cursor.execute(sql)
 
 
@@ -193,21 +177,22 @@ def enterwaypoints(cursor, user, waypoints, file_uid):
     for wpt in waypoints:
         wpt_name, wpt_ele, wpt_time, wpt_sym, wpt_loc, wpt_geom = wpt
         if wpt_loc == -1:
-            sql = "INSERT INTO waypoints (wpt_name, ele, utctimestamp, sym,"
-            sql += "file_uid, user_uid, geom) VALUES "
-            sql += "(\"{0}\", {1}, '{2}', \"{3}\", {4}, {5},"\
-                " GeomFromText('{6}', 4326))".format(wpt_name, wpt_ele,
-                                                     wpt_time, wpt_sym,
-                                                     file_uid, user,
-                                                     wpt_geom)
+            sql = ("INSERT INTO waypoints (wpt_name, ele, utctimestamp, sym,"
+                   "file_uid, user_uid, geom) VALUES(\"{0}\", {1}, '{2}',"
+                   " \"{3}\", {4}, {5}, GeomFromText('{6}', 4326))")
+
+            sql = sql.format(wpt_name, wpt_ele, wpt_time, wpt_sym, file_uid,
+                             user, wpt_geom)
+
         else:
-            sql = "INSERT INTO waypoints (wpt_name, ele, utctimestamp, sym,"
-            sql += "file_uid, user_uid, citydef_uid, geom) VALUES "
-            sql += "(\"{0}\", {1}, '{2}', \"{3}\", {4}, {5}, {6},"\
-                " GeomFromText('{7}', 4326))".format(wpt_name, wpt_ele,
-                                                     wpt_time, wpt_sym,
-                                                     file_uid, user,
-                                                     wpt_loc, wpt_geom)
+
+            sql = ("INSERT INTO waypoints (wpt_name, ele, utctimestamp, sym,"
+                   "file_uid, user_uid, citydef_uid, geom) VALUES "
+                   "(\"{0}\", {1}, '{2}', \"{3}\", {4}, {5}, {6},"
+                   " GeomFromText('{7}', 4326))")
+
+            sql = sql.format(wpt_name, wpt_ele, wpt_time, wpt_sym, file_uid,
+                             user, wpt_loc, wpt_geom)
 
         cursor.execute(sql)
 
@@ -219,8 +204,8 @@ def insert_segment(cursor, seg_uuid):
     Arguments:
     - `seg_uuid`: uuid of segment
     """
-    sql = "INSERT INTO tracksegments (trkseg_uuid) VALUES"
-    sql += "('{0}')".format(seg_uuid)
+    sql = ("INSERT INTO tracksegments (trkseg_uuid) VALUES"
+           "('{0}')").format(seg_uuid)
     cursor.execute(sql)
 
 
@@ -229,8 +214,8 @@ def get_location(cursor, lon, lat):
     Query the database citydefs table to see if the point is within
     one. Return 1 (Unknown) if not
     """
-    sql = "SELECT citydef_uid FROM citydefs WHERE within"
-    sql += "(ST_GeomFromText('Point({0} {1})'), geom)".format(lon, lat)
+    sql = ("SELECT citydef_uid FROM citydefs WHERE within"
+           "(ST_GeomFromText('Point({0} {1})'), geom)").format(lon, lat)
     cursor.execute(sql)
     try:
         loc_id = cursor.fetchone()[0]
@@ -277,8 +262,7 @@ def insert_user(cursor, username):
     """
     Insert a user into the database.
     """
-    sql = "INSERT INTO users ('username') VALUES"
-    sql += "('{0}')".format(username)
+    sql = "INSERT INTO users ('username') VALUES" "('{0}')".format(username)
     cursor.execute(sql)
 
     return get_user_id(cursor, username)
@@ -295,8 +279,8 @@ def update_locations(cursor, locations_list):
     """
     num_updated = 0
     for loc in locations_list:
-        sql = "UPDATE trackpoints SET citydef_uid = {0} ".format(loc[0])
-        sql += "WHERE trkpt_uid = {0}".format(loc[1])
+        sql = ("UPDATE trackpoints SET citydef_uid = {0} "
+               "WHERE trkpt_uid = {1}").format(loc[0], loc[1])
         cursor.execute(sql)
         num_updated += 1
 
@@ -317,9 +301,10 @@ def get_locations(cursor, unknown_only):
     trackpoint from the citydefs table
     """
 
-    sql = "SELECT citydefs.citydef_uid, trackpoints.trkpt_uid "
-    sql += "FROM citydefs, trackpoints "
-    sql += "WHERE within(trackpoints.geom, citydefs.geom)"
+    sql = ("SELECT citydefs.citydef_uid, trackpoints.trkpt_uid "
+           "FROM citydefs, trackpoints "
+           "WHERE within(trackpoints.geom, citydefs.geom)")
+
     if unknown_only is True:
         sql += " AND trackpoints.citydef_uid = 1"
 

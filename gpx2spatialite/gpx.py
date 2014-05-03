@@ -41,9 +41,8 @@ def get_gpx_file(file_path):
                 gpx = gpxpy.parse(gpx_file)
                 return gpx
             except Exception as e:
-                print("GPXException ({0}) for {1}: {2}.".format(type(e),
-                                                                file_path,
-                                                                e))
+                msg = "GPXException ({0}) for {1}: {2}."
+                print(msg.format(type(e), file_path, e))
     except IOError as err:
         print(err)
         sys.exit(2)

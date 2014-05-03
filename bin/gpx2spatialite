@@ -118,15 +118,15 @@ def main():
     g2s.print_cmdline("\nFound {0} .gpx files.\n".format(len(gpx_filepaths)))
 
     if len(gpx_filepaths) == 0:
-        print "No input files!"
+        print("No input files!")
         sys.exit(1)
 
     # -------------------------------------------------------------------------
 
     if not g2s.check_if_table_exists(conn, "users"):
-        print("Unable to find database table \"users\".")
-        print("Use `gpx2spatialite_create_db` to create \
-the database beforehand.")
+        msg = ("Unable to find database table \"users\".\n Use "
+               "`gpx2spatialite_create_db` to create the database beforehand.")
+        print(msg)
         cursor.close()
         conn.close()
         sys.exit(1)
@@ -176,9 +176,8 @@ the database beforehand.")
 
         # ---------------------------------------------------------------------
 
-        msg = "File first timestamp: {0}, ".format(firsttimestamp)
-        msg += "last timestamp: {0}".format(lasttimestamp)
-        g2s.print_cmdline(msg)
+        msg = "File first timestamp: {0}, last timestamp: {1}"
+        g2s.print_cmdline(msg.format(firsttimestamp, lasttimestamp))
 
         if firsttimestamp == 0 or lasttimestamp == 0:
             continue
@@ -187,11 +186,9 @@ the database beforehand.")
         # ---------------------------------------------------------------------
 
         parsing_endtime = datetime.now()
-        msg = "\nParsing {0} points and {1} waypoints ".format(len(trkpts),
-                                                               len(wpts))
-        msg += "from gpx file took {0}".format(parsing_endtime -
-                                               parsing_starttimep)
-        g2s.print_cmdline(msg)
+        parsing_duration = parsing_endtime - parsing_starttimep
+        msg = "\nParsing {0} points and {1} waypoints from gpx file took {2}"
+        g2s.print_cmdline(msg.format(len(trkpts), len(wpts), parsing_duration))
 
         # ---------------------------------------------------------------------
 
@@ -217,9 +214,9 @@ the database beforehand.")
 
         # ---------------------------------------------------------------------
         db_endtime = datetime.now()
-        msg = "Entering into database took {0}".format(db_endtime -
-                                                       db_starttime)
-        g2s.print_cmdline(msg)
+        db_duration = db_endtime - db_starttime
+        msg = "Entering into database took {0}"
+        g2s.print_cmdline(msg.format(db_duration))
 
         # ---------------------------------------------------------------------
 
