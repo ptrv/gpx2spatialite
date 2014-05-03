@@ -118,13 +118,11 @@ class TestDb:
         assert wpt_row[9] == "POINT(-121.17042 37.085751)"
 
     def test_check_if_table_exists(self, db):
-        table_exists = gpx2spatialite \
-            .check_if_table_exists(db.conn, "users")
-        assert table_exists is True
+        table_exists_func = \
+            partial(gpx2spatialite.check_if_table_exists, db.conn)
 
-        table_exists = gpx2spatialite \
-            .check_if_table_exists(db.conn, "users-not-existing")
-        assert table_exists is False
+        assert table_exists_func("users") is True
+        assert table_exists_func("users-not-existing") is False
 
     def test_get_cityid_trackpoint_pairs(self, gpx_path, db):
         cursor = db.cursor
@@ -138,5 +136,4 @@ class TestDb:
             partial(gpx2spatialite.get_cityid_trackpoint_pairs, cursor)
 
         assert len(loc_trks_func(False)) == 4
-
         assert len(loc_trks_func(True)) == 0
