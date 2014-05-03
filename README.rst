@@ -37,13 +37,35 @@ Run script to create a new database and initialize it::
 CityDefs
 --------
 
-Import/update citydefs into existing database::
+Each trackpoint has a location assigned to it which is used for the
+`drawinglife <https://github.com/ptrv/drawinglife>`_ animation.
+
+These are defined at import time unless the option `-s` or
+`--skip-locations` is passed.
+
+Locations are defined in the `citydefs` table in the database,
+created and populated automatically by 'gpx2spatialite_create_db'.
+
+Import citydefs into existing database::
 
   gpx2spatialite_citydefs -i <path/to/input.sql> <path/to/database>
 
 Export citydefs table::
 
   gpx2spatialite_citydefs -e <path/to/output.sql> <path/to/database>
+
+After adding new locations to the citydefs table, you can look for
+currently unknown trackpoints and assign them to any relevant,
+newly defined locations with::
+
+  gpx2spatialite_updatelocs <path/to/database>
+
+If you have redefined currently assigned locations or completely
+changed the citydefs table, you will want to redefine every
+trackpoint in the database, for which you use the `-a` or
+`-all-locations` option to the above script::
+
+  gpx2spatialite_updatelocs -a <path/to/database>
 
 
 Unit tests

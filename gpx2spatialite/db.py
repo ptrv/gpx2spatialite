@@ -241,42 +241,6 @@ def get_location(cursor, lon, lat):
     return loc_id
 
 
-def update_locations(connection):
-    """
-    Update location of points.
-    """
-    cur = connection.cursor()
-    # cur.execute("PRAGMA foreign_keys = ON")
-
-    sql = "select *, astext(geom) from trackpoints "
-    sql += "where citydef_uid = 1 or citydef_uid is null"
-
-    res = cur.execute(sql)
-    unknowns = res.fetchall()
-
-    num_updated = 0
-    for row in unknowns:
-        sql = "select * from citydefs where within("
-        sql += "GeomFromText('{0}'), geom)".format(row[12])
-        rs2 = cur.execute(sql)
-        city = rs2.fetchone()
-        if city is not None:
-            sql = "update trackpoints set citydef_uid = {0} ".format(city[0])
-            sql += "where trkpt_uid = {0}".format(row[0])
-            cur.execute(sql)
-            num_updated += 1
-        elif row[10] is None:
-            sql = "update trackpoints set citydef_uid = 1 "
-            sql += "where trkpt_uid = {0}".format(row[0])
-            cur.execute(sql)
-            num_updated += 1
-
-    cur.close()
-    connection.commit()
-
-    return len(unknowns), num_updated
-
-
 def check_if_gpxfile_exists(cursor, filepath):
     """
     Checks if file is already in database.

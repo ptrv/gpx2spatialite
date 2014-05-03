@@ -1,0 +1,156 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+gpx2spatialite_updatelocs
+2014/04/28 20:30:33
+
+Separate script to handle updating locations in the database if you
+have changed citydefs by adding locations or redifining existing ones.
+
+Copyright 2014 Daniel Belasco Rogers danbelasco@yahoo.co.uk
+"""
+
+import sys
+from optparse import OptionParser
+from os import path
+from datetime import datetime
+import gpx2spatialite as g2s
+
+
+def parseargs():
+    """
+    parse command line arguments and define options etc
+    """
+    usage = "usage: %prog [options] /path/to/database"
+    optparser = OptionParser(usage, version="%prog 0.1")
+    optparser.add_option("-a",
+                         "--all-locations",
+                         dest="all_locs",
+                         default=False,
+                         action="store_true",
+                         help="Scan all points and reset location,\
+not just unknown ones")
+
+    (options, args) = optparser.parse_args()
+    if len(args) != 1:
+        optparser.error("Please enter a database path")
+    dbpath = path.expanduser(args[0])
+
+    return dbpath, options.all_locs
+
+
+def updatelocs(locationlist, cursor):
+    """
+    update the table with the list from getlocations
+    """
+    for l in locationlist:
+        sql = "UPDATE trackpoints SET citydef_uid = {0} ".format(l[0])
+        sql += "WHERE trkpt_uid = {0}".format(l[1])
+        cursor.execute(sql)
+
+    return
+
+
+def resetcities(cursor):
+    """
+    reset all cities to 1 (unknown)
+    """
+    sql = "UPDATE trackpoints SET citydef_uid = 1"
+    cursor.execute(sql)
+
+    return
+
+
+def getlocations(cursor):
+    """
+    Get a list of trackpoint ids and the location id of that
+    trackpoint from the citydefs table
+    """
+
+    sql = "SELECT citydefs.citydef_uid, trackpoints.trkpt_uid "
+    sql += "FROM citydefs, trackpoints "
+    sql += "WHERE within(trackpoints.geom, citydefs.geom)"
+    results = cursor.execute(sql)
+    locationlist = results.fetchall()
+
+    return locationlist
+
+
+def partialupdater(cur):
+    """
+    Update location of unknown points.
+
+    This is the original location updater that was part of the core
+    script
+    """
+
+    sql = "SELECT trkpt_uid, citydef_uid, AsText(geom) FROM trackpoints"
+    sql += " WHERE citydef_uid = 1"
+
+    res = cur.execute(sql)
+    unknowns = res.fetchall()
+
+    print "{0} unknown points found".format(len(unknowns))
+    print "Now updating"
+
+    num_updated = 0
+
+    for row in unknowns:
+        sql = "select citydef_uid from citydefs where within("
+        sql += "GeomFromText('{0}'), geom)".format(row[2])
+        rs2 = cur.execute(sql)
+        city = rs2.fetchone()
+        if city is not None:
+            sql = "update trackpoints set citydef_uid = {0} ".format(city[0])
+            sql += "where trkpt_uid = {0}".format(row[0])
+            cur.execute(sql)
+            num_updated += 1
+        elif row[2] is None:
+            sql = "update trackpoints set citydef_uid = 1 "
+            sql += "where trkpt_uid = {0}".format(row[0])
+            cur.execute(sql)
+            num_updated += 1
+
+    return len(unknowns), num_updated
+
+
+def main():
+    """
+    """
+    starttime = datetime.now()
+
+    dbpath, all_locs = parseargs()
+
+    conn = g2s.get_connection(dbpath)
+    cursor = conn.cursor()
+
+    print "*" * 48
+    if all_locs:
+        print "Resetting all trackpoints to location 1 (unknown)"
+        resetcities(cursor)
+
+        print "Generating a list of trackpoints and cities to update"
+        locationlist = getlocations(cursor)
+
+        print "Updating %d trackpoints" % len(locationlist)
+        updatelocs(locationlist, cursor)
+
+    else:
+        print "Updating only unknown locations"
+        unknowns, updated = partialupdater(cursor)
+
+        print "All unknown cities %d, new cities updated %d" % (unknowns,
+                                                                updated)
+
+    cursor.close()
+    conn.commit()
+    conn.close()
+
+    endtime = datetime.now()
+    print "Script took %s" % (endtime - starttime)
+    print "*" * 48
+
+
+if __name__ == '__main__':
+    sys.exit(main())

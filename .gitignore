@@ -46,3 +46,4 @@ nosetests.xml
 !bin/gpx2spatialite
 !bin/gpx2spatialite_create_db
 !bin/gpx2spatialite_citydefs
+!bin/gpx2spatialite_updatelocs
