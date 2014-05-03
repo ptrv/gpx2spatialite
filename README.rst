@@ -38,7 +38,7 @@ CityDefs
 --------
 
 Each trackpoint has a location assigned to it which is used for the
-`drawinglife <https://github.com/ptrv/drawinglife>` animation.
+`drawinglife <https://github.com/ptrv/drawinglife>`_ animation.
 
 These are defined at import time unless the option `-s` or
 `--skip-locations` is passed.
