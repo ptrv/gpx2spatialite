@@ -295,7 +295,7 @@ def reset_cities(cursor):
     cursor.execute(sql)
 
 
-def get_locations(cursor, unknown_only):
+def get_cityid_trackpoint_pairs(cursor, unknown_only):
     """
     Get a list of trackpoint ids and the location id of that
     trackpoint from the citydefs table

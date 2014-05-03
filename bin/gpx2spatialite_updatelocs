@@ -82,7 +82,7 @@ def main():
         print("Generating a list with trackpoints with unknown "
               "cities to update.")
 
-    locations_list = g2s.get_locations(cursor, not all_locs)
+    locations_list = g2s.get_cityid_trackpoint_pairs(cursor, not all_locs)
 
     print("Updating {0} trackpoints".format(len(locations_list)))
     g2s.update_locations(cursor, locations_list)
