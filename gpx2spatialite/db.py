@@ -311,7 +311,7 @@ def reset_cities(cursor):
     cursor.execute(sql)
 
 
-def get_locations(cursor, partial=False):
+def get_locations(cursor, unknown_only):
     """
     Get a list of trackpoint ids and the location id of that
     trackpoint from the citydefs table
@@ -320,7 +320,7 @@ def get_locations(cursor, partial=False):
     sql = "SELECT citydefs.citydef_uid, trackpoints.trkpt_uid "
     sql += "FROM citydefs, trackpoints "
     sql += "WHERE within(trackpoints.geom, citydefs.geom)"
-    if partial is True:
+    if unknown_only is True:
         sql += " AND trackpoints.citydef_uid = 1"
 
     results = cursor.execute(sql)
