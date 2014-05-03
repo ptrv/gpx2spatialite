@@ -1,5 +1,6 @@
 import pytest
 import os.path
+from functools import partial
 import gpx2spatialite
 
 
@@ -124,3 +125,18 @@ class TestDb:
         table_exists = gpx2spatialite \
             .check_if_table_exists(db.conn, "users-not-existing")
         assert table_exists is False
+
+    def test_get_cityid_trackpoint_pairs(self, gpx_path, db):
+        cursor = db.cursor
+        extracted_pts = gpx2spatialite.extractpoints(gpx_path)
+
+        fileid, userid = self.get_file_and_user(gpx_path, db)
+        gpx2spatialite.enterpoints(cursor, userid, extracted_pts[0],
+                                   fileid, None)
+
+        loc_trks_func = \
+            partial(gpx2spatialite.get_cityid_trackpoint_pairs, cursor)
+
+        assert len(loc_trks_func(False)) == 4
+
+        assert len(loc_trks_func(True)) == 0
