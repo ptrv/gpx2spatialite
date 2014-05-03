@@ -287,3 +287,43 @@ def insert_user(cursor, username):
 def get_location_func(cursor):
     """Return the partial function for the location lookup"""
     return partial(get_location, cursor)
+
+
+def update_locations(cursor, locations_list):
+    """
+    update the table with the list from getlocations
+    """
+    num_updated = 0
+    for loc in locations_list:
+        sql = "UPDATE trackpoints SET citydef_uid = {0} ".format(loc[0])
+        sql += "WHERE trkpt_uid = {0}".format(loc[1])
+        cursor.execute(sql)
+        num_updated += 1
+
+    return num_updated
+
+
+def reset_cities(cursor):
+    """
+    reset all cities to 1 (unknown)
+    """
+    sql = "UPDATE trackpoints SET citydef_uid = 1"
+    cursor.execute(sql)
+
+
+def get_locations(cursor, partial=False):
+    """
+    Get a list of trackpoint ids and the location id of that
+    trackpoint from the citydefs table
+    """
+
+    sql = "SELECT citydefs.citydef_uid, trackpoints.trkpt_uid "
+    sql += "FROM citydefs, trackpoints "
+    sql += "WHERE within(trackpoints.geom, citydefs.geom)"
+    if partial is True:
+        sql += " AND trackpoints.citydef_uid = 1"
+
+    results = cursor.execute(sql)
+    locations_list = results.fetchall()
+
+    return locations_list

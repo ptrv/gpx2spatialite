@@ -92,7 +92,7 @@ def parseargs():
 
     skip_locs = options.skip_locs
 
-    return filepaths, user, dbpath, skip_locs, quite
+    return filepaths, user, dbpath, skip_locs, quiet
 
 
 def main():

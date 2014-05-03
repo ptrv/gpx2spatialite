@@ -1,14 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Copyright (C) 2014
+# Daniel Belasco Rogers <http://planbperformance.net/dan>,
+# Peter Vasil <mail@petervasil.net>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see [http://www.gnu.org/licenses/].
+
 """
-gpx2spatialite_updatelocs
-2014/04/28 20:30:33
 
 Separate script to handle updating locations in the database if you
 have changed citydefs by adding locations or redifining existing ones.
 
-Copyright 2014 Daniel Belasco Rogers danbelasco@yahoo.co.uk
 """
 
 import sys
@@ -40,116 +54,50 @@ not just unknown ones")
     return dbpath, options.all_locs
 
 
-def updatelocs(locationlist, cursor):
-    """
-    update the table with the list from getlocations
-    """
-    for l in locationlist:
-        sql = "UPDATE trackpoints SET citydef_uid = {0} ".format(l[0])
-        sql += "WHERE trkpt_uid = {0}".format(l[1])
-        cursor.execute(sql)
-
-    return
-
-
-def resetcities(cursor):
-    """
-    reset all cities to 1 (unknown)
-    """
-    sql = "UPDATE trackpoints SET citydef_uid = 1"
-    cursor.execute(sql)
-
-    return
-
-
-def getlocations(cursor):
-    """
-    Get a list of trackpoint ids and the location id of that
-    trackpoint from the citydefs table
-    """
-
-    sql = "SELECT citydefs.citydef_uid, trackpoints.trkpt_uid "
-    sql += "FROM citydefs, trackpoints "
-    sql += "WHERE within(trackpoints.geom, citydefs.geom)"
-    results = cursor.execute(sql)
-    locationlist = results.fetchall()
-
-    return locationlist
-
-
-def partialupdater(cur):
-    """
-    Update location of unknown points.
-
-    This is the original location updater that was part of the core
-    script
-    """
-
-    sql = "SELECT trkpt_uid, citydef_uid, AsText(geom) FROM trackpoints"
-    sql += " WHERE citydef_uid = 1"
-
-    res = cur.execute(sql)
-    unknowns = res.fetchall()
-
-    print "{0} unknown points found".format(len(unknowns))
-    print "Now updating"
-
-    num_updated = 0
-
-    for row in unknowns:
-        sql = "select citydef_uid from citydefs where within("
-        sql += "GeomFromText('{0}'), geom)".format(row[2])
-        rs2 = cur.execute(sql)
-        city = rs2.fetchone()
-        if city is not None:
-            sql = "update trackpoints set citydef_uid = {0} ".format(city[0])
-            sql += "where trkpt_uid = {0}".format(row[0])
-            cur.execute(sql)
-            num_updated += 1
-        elif row[2] is None:
-            sql = "update trackpoints set citydef_uid = 1 "
-            sql += "where trkpt_uid = {0}".format(row[0])
-            cur.execute(sql)
-            num_updated += 1
-
-    return len(unknowns), num_updated
-
-
 def main():
     """
     """
     starttime = datetime.now()
+
+    # -------------------------------------------------------------------------
 
     dbpath, all_locs = parseargs()
 
     conn = g2s.get_connection(dbpath)
     cursor = conn.cursor()
 
-    print "*" * 48
-    if all_locs:
-        print "Resetting all trackpoints to location 1 (unknown)"
-        resetcities(cursor)
+    # -------------------------------------------------------------------------
 
-        print "Generating a list of trackpoints and cities to update"
-        locationlist = getlocations(cursor)
+    print("*" * 48)
 
-        print "Updating %d trackpoints" % len(locationlist)
-        updatelocs(locationlist, cursor)
+    if all_locs is True:
+
+        print("Resetting all trackpoints to location 1 (unknown)")
+        g2s.reset_cities(cursor)
+
+        print("Generating a list of trackpoints and cities to update")
 
     else:
-        print "Updating only unknown locations"
-        unknowns, updated = partialupdater(cursor)
 
-        print "All unknown cities %d, new cities updated %d" % (unknowns,
-                                                                updated)
+        print("Generating a list with trackpoints with unknown "
+              "cities to update.")
+
+    locations_list = g2s.get_locations(cursor, not all_locs)
+
+    print("Updating {0} trackpoints".format(len(locations_list)))
+    g2s.update_locations(cursor, locations_list)
+
+    # -------------------------------------------------------------------------
 
     cursor.close()
     conn.commit()
     conn.close()
 
+    # -------------------------------------------------------------------------
+
     endtime = datetime.now()
-    print "Script took %s" % (endtime - starttime)
-    print "*" * 48
+    print("Script took {0}".format(endtime - starttime))
+    print("*" * 48)
 
 
 if __name__ == '__main__':
