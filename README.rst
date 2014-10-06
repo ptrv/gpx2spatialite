@@ -9,6 +9,18 @@ A script for importing GPX files into a SpatiaLite database.
 Using Tomo Krajina's gpx module, import a file record, trackpoints and
 tracklines to a database (SQL for database below)
 
+Installation
+------------
+
+gpx2spatialite is available via pip. To install it with user scope run the following command::
+
+  pip install gpx2spatialite --user
+
+Make sure that ``$HOME/.local/bin`` is available in your ``PATH`` environment variable.
+Otherwise the gpx2spatialite executable will not be found when you run it from the shell::
+
+  PATH=$PATH:$HOME/.local/bin
+
 
 Usage
 -----
