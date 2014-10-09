@@ -11,6 +11,10 @@ gpx2spatialite
    :target: https://pypi.python.org/pypi/gpx2spatialite/
    :alt: Latest Version
 
+.. image:: https://pypip.in/py_versions/gpx2spatialite/badge.svg
+   :target: https://pypi.python.org/pypi/gpx2spatialite/
+   :alt: Supported Python versions
+
 .. image:: https://pypip.in/license/gpx2spatialite/badge.svg
    :target: https://pypi.python.org/pypi/gpx2spatialite/
    :alt: License
