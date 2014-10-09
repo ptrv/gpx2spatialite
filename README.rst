@@ -1,11 +1,10 @@
 ==============
 gpx2spatialite
 ==============
-
-.. image::https://travis-ci.org/ptrv/gpx2spatialite.svg?branch=master
-
 :Author: Daniel Belasco Rogers <http://planbperformance.net/dan>,
          Peter Vasil <mail@petervasil.net>
+
+.. image:: https://travis-ci.org/ptrv/gpx2spatialite.svg?branch=master
 
 A script for importing GPX files into a SpatiaLite database.
 
