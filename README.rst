@@ -5,6 +5,7 @@ gpx2spatialite
          Peter Vasil <mail@petervasil.net>
 
 .. image:: https://travis-ci.org/ptrv/gpx2spatialite.svg?branch=master
+   :target: https://travis-ci.org/ptrv/gpx2spatialite
 
 .. image:: https://pypip.in/version/gpx2spatialite/badge.svg
    :target: https://pypi.python.org/pypi/gpx2spatialite/
