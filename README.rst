@@ -1,6 +1,9 @@
 ==============
 gpx2spatialite
 ==============
+
+.. image::https://travis-ci.org/ptrv/gpx2spatialite.svg?branch=master
+
 :Author: Daniel Belasco Rogers <http://planbperformance.net/dan>,
          Peter Vasil <mail@petervasil.net>
 
