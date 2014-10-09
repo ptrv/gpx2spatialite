@@ -6,6 +6,14 @@ gpx2spatialite
 
 .. image:: https://travis-ci.org/ptrv/gpx2spatialite.svg?branch=master
 
+.. image:: https://pypip.in/version/gpx2spatialite/badge.svg
+   :target: https://pypi.python.org/pypi/gpx2spatialite/
+   :alt: Latest Version
+
+.. image:: https://pypip.in/license/gpx2spatialite/badge.svg
+   :target: https://pypi.python.org/pypi/gpx2spatialite/
+   :alt: License
+
 A script for importing GPX files into a SpatiaLite database.
 
 Using Tomo Krajina's gpx module, import a file record, trackpoints and
