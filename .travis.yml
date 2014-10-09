@@ -14,6 +14,7 @@ install:
 
   # Spatialiate
   - sudo apt-get install -y libproj-dev libgeos-dev libspatialite-dev
+  - sudo ln -s /usr/lib/x86_64-linux-gnu/libspatialite.so /usr/lib/libspatialite.so
   - pip install git+git://github.com/tinio/pysqlite.git@extension-enabled#egg=pysqlite
 
 script: python ./runtests.py

@@ -47,19 +47,13 @@ def get_connection(db_path):
         try:
             connection.execute('SELECT load_extension("libspatialite.so")')
         except:
-            pass
-        try:
-            connection.execute('SELECT load_extension("libspatialite")')
-        except:
-            pass
-        try:
-            connection.execute('SELECT load_extension("mod_spatialite")')
-        except:
-            pass
-        try:
-            connection.execute('SELECT load_extension("/usr/lib/x86_64-linux-gnu/libspatialite.so")')
-        except:
-            print("Unable to load spatialite sqlite3 extension")
-            sys.exit(0)
+            try:
+                connection.execute('SELECT load_extension("libspatialite")')
+            except:
+                try:
+                    connection.execute('SELECT load_extension("mod_spatialite")')
+                except:
+                    print("Unable to load spatialite sqlite3 extension")
+                    sys.exit(0)
 
     return connection
