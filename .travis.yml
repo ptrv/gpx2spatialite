@@ -9,6 +9,9 @@ install:
   - sudo apt-add-repository -y ppa:ubuntugis/ppa
   - sudo apt-get update -qq
 
+  # gpxpy
+  - pip install gpxpy
+
   # Spatialiate
   - sudo apt-get install -y libproj-dev libgeos-dev libspatialite-dev
   - pip install git+git://github.com/tinio/pysqlite.git@extension-enabled#egg=pysqlite
