@@ -1,0 +1,16 @@
+language: python
+
+python:
+  - 2.7
+
+install:
+  - sudo apt-get install -y python-software-properties
+  - sudo apt-add-repository -y ppa:git-core/ppa
+  - sudo apt-add-repository -y ppa:ubuntugis/ppa
+  - sudo apt-get update -qq
+
+  # Spatialiate
+  - sudo apt-get install -y libproj-dev libgeos-dev libspatialite-dev
+  - pip install git+git://github.com/tinio/pysqlite.git@extension-enabled#egg=pysqlite
+
+script: python ./runtests.py
