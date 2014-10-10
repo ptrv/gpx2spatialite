@@ -19,7 +19,8 @@ gpx2spatialite
    :target: https://pypi.python.org/pypi/gpx2spatialite/
    :alt: License
 
-
+|
+|
 
 A script for importing GPX files into a SpatiaLite database.
 
