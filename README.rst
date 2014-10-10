@@ -20,7 +20,6 @@ gpx2spatialite
    :alt: License
 
 |
-|
 
 A script for importing GPX files into a SpatiaLite database.
 
