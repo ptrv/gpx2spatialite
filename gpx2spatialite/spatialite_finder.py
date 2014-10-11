@@ -43,17 +43,29 @@ def get_connection(db_path):
     connection = spatialite.connect(db_path)
     if LOAD_AS_EXTENSION:
         # print('spatialite loaded as sqlite extension')
+
         connection.enable_load_extension(True)
-        try:
-            connection.execute('SELECT load_extension("libspatialite.so")')
-        except:
+
+        libspatialite_shared_libs = [
+            'libspatialite.so',
+            'libspatialite',
+            'mod_spatialite',
+            '/usr/local/opt/libspatialite/lib/mod_spatialite',
+            'libspatialite.dll'
+        ]
+
+        load_successfull = False
+        for lib_name in libspatialite_shared_libs:
+            load_ext_query = 'SELECT load_extension("{0}")'.format(lib_name)
             try:
-                connection.execute('SELECT load_extension("libspatialite")')
+                connection.execute(load_ext_query)
+                load_successfull = True
+                break
             except:
-                try:
-                    connection.execute('SELECT load_extension("mod_spatialite")')
-                except:
-                    print("Unable to load spatialite sqlite3 extension")
-                    sys.exit(0)
+                pass
+
+        if not load_successfull:
+            print("Unable to load spatialite sqlite3 extension")
+            sys.exit(0)
 
     return connection
