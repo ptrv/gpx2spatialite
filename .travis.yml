@@ -17,4 +17,4 @@ install:
   - sudo ln -s /usr/lib/x86_64-linux-gnu/libspatialite.so /usr/lib/libspatialite.so
   - pip install git+git://github.com/tinio/pysqlite.git@extension-enabled#egg=pysqlite
 
-script: python ./runtests.py
+script: python setup.py test
