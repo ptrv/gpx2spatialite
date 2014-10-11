@@ -31,7 +31,7 @@ def parseargs():
     """
     usage = "usage: %prog [-i|-e <path/to/input|output.sql>] "\
             "/path/to/database.sqlite "
-    optparser = OptionParser(usage, version="%prog 0.1")
+    optparser = OptionParser(usage, version=gpx2spatialite.__version__)
     optparser.add_option("-e",
                          "--export",
                          metavar='SQL-FILE',

@@ -25,7 +25,7 @@ from gpx2spatialite import spatialite
 
 def parseargs():
     usage = "usage: %prog [options] /path/to/new/database.sqlite"
-    optparser = OptionParser(usage, version="%prog 0.1")
+    optparser = OptionParser(usage, version=g2s.__version__)
     optparser.add_option('-c',
                          '--custom-citydefs',
                          dest='custom_citydefs',
