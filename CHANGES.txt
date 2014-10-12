@@ -1,1 +1,17 @@
-v0.5, 2014-01-05 --- Initial release as python package.
+0.6.1 - 2014-10-12
+------------------
+* Improve spatialite_finder.py and check for more spatialite shared lib
+  names
+* Set version for all scripts
+
+
+0.6 - 2014-10-11
+----------------
+* New script: gpx2spatialite_updatelocs
+* Add option to supress commandline output
+* Lots of under the hood changes
+
+
+0.5 - 2014-01-05
+----------------
+* Initial release as python package.
