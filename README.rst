@@ -4,6 +4,23 @@ gpx2spatialite
 :Author: Daniel Belasco Rogers <dan@planbperformance.net>,
          Peter Vasil <mail@petervasil.net>
 
+.. image:: https://travis-ci.org/ptrv/gpx2spatialite.svg?branch=master
+   :target: https://travis-ci.org/ptrv/gpx2spatialite
+
+.. image:: https://pypip.in/version/gpx2spatialite/badge.svg
+   :target: https://pypi.python.org/pypi/gpx2spatialite/
+   :alt: Latest Version
+
+.. image:: https://pypip.in/py_versions/gpx2spatialite/badge.svg
+   :target: https://pypi.python.org/pypi/gpx2spatialite/
+   :alt: Supported Python versions
+
+.. image:: https://pypip.in/license/gpx2spatialite/badge.svg
+   :target: https://pypi.python.org/pypi/gpx2spatialite/
+   :alt: License
+
+|
+
 A script for importing GPX files into a SpatiaLite database.
 
 Uses Tomo Krajina's gpx module. gpx2spatialite takes a single or
@@ -34,6 +51,18 @@ points to the citydefs table. This column is also populated on
 import by default. If you do not require this, you can set the
 option -s --skip-locations which will speed up importing
 considerably.
+
+Installation
+------------
+
+gpx2spatialite is available via pip. To install it with user scope run the following command::
+
+  pip install gpx2spatialite --user
+
+Make sure that ``$HOME/.local/bin`` is available in your ``PATH`` environment variable.
+Otherwise the gpx2spatialite executable will not be found when you run it from the shell::
+
+  PATH=$PATH:$HOME/.local/bin
 
 
 Usage

@@ -37,7 +37,7 @@ def parseargs():
     parse command line arguments and define options etc
     """
     usage = "usage: %prog [options] /path/to/database"
-    optparser = OptionParser(usage, version="%prog 0.1")
+    optparser = OptionParser(usage, version=g2s.__version__)
     optparser.add_option("-a",
                          "--all-locations",
                          dest="all_locs",
