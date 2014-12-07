@@ -1,13 +1,39 @@
 ==============
 gpx2spatialite
 ==============
-:Author: Daniel Belasco Rogers <http://planbperformance.net/dan>,
+:Author: Daniel Belasco Rogers <dan@planbperformance.net>,
          Peter Vasil <mail@petervasil.net>
 
 A script for importing GPX files into a SpatiaLite database.
 
-Using Tomo Krajina's gpx module, import a file record, trackpoints and
-tracklines to a database (SQL for database below)
+Uses Tomo Krajina's gpx module. gpx2spatialite takes a single or
+folder full of gpx files and imports them into a spatialite spatial
+database. On importing, a file is hashed and entered into a table
+to make sure that a file with identical contents is not added
+twice. The spatial information from trackpoints is stored in two
+tables in the spatialite database, trackpoints and tracklines which
+are related. You can read more detail about the reason to represent
+data from a GPX file like this here:
+<http://planbperformance.net/dan/blog/?p=984>
+
+The compulsory 'user' argument is to import gpx files from
+different users into the same database. This is because
+gpx2spatialite was written as an importer for DrawingLife
+<https://github.com/ptrv/drawinglife> which is a visualisation
+software written by Peter Vasil for Daniel Belasco Rogers' and
+Sophia New's art project of recording everywhere they go with a GPS
+since 2003 and 2007 respectively (<http://belasconew.com/works/lifedrawing/>)
+
+If you only have one user to enter, just pick any name and import
+all files under this name.
+
+Because DrawingLife has text at the top of the screen which shows
+the current location of the animation screen, this information is
+provided by the citydef_uid column in the trackpoints table which
+points to the citydefs table. This column is also populated on
+import by default. If you do not require this, you can set the
+option -s --skip-locations which will speed up importing
+considerably.
 
 
 Usage
