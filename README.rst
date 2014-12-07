@@ -19,8 +19,6 @@ gpx2spatialite
    :target: https://pypi.python.org/pypi/gpx2spatialite/
    :alt: License
 
-|
-
 A script for importing GPX files into a SpatiaLite database.
 
 Uses Tomo Krajina's gpx module. gpx2spatialite takes a single or
@@ -55,7 +53,12 @@ considerably.
 Installation
 ------------
 
-gpx2spatialite is available via pip. To install it with user scope run the following command::
+gpx2spatialite is available via pip.
+You can simply run::
+
+  pip install gpx2spatialite
+
+Or to install it with user scope run the following command::
 
   pip install gpx2spatialite --user
 
