@@ -50,6 +50,28 @@ import by default. If you do not require this, you can set the
 option -s --skip-locations which will speed up importing
 considerably.
 
+Dependencies
+------------
+
+Python:
+
+* gpxpy
+* pyspatialite, pysqlite2 (with support for loading extensions)
+
+Linux and Mac:
+
+* libspatialite
+* libsqlite
+
+Windows:
+
+Here are some instructions for installing libspatialite on Windows:
+
+<https://www.gaia-gis.it/spatialite-2.3.1/install-windows.html>
+
+The spatialite version 2.3.1 is a outdated and not tested
+
+
 Installation
 ------------
 
@@ -135,13 +157,6 @@ The repository contains the standalone py.test (version 2.5.2) script
 Run the following command to run the tests::
 
   python setup.py test
-
-
-Dependencies
-------------
-
-* gpxpy
-* sqlite library with loading extension support or pyspatialite
 
 
 ..
