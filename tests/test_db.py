@@ -1,14 +1,17 @@
 import pytest
 import os.path
 from functools import partial
-import gpx2spatialite
+from gpx2spatialite import db
+from gpx2spatialite import db_helper
+from gpx2spatialite import helper
+from gpx2spatialite import gpx
 
 
-@pytest.mark.usefixtures("gpx_path", "db")
+@pytest.mark.usefixtures("gpx_path", "database")
 class TestDb:
-    def test_insert_user(self, db):
-        cursor = db.cursor
-        userid = gpx2spatialite.insert_user(cursor, "testuser2")
+    def test_insert_user(self, database):
+        cursor = database.cursor
+        userid = db.insert_user(cursor, "testuser2")
 
         assert userid == 2
 
@@ -17,13 +20,11 @@ class TestDb:
         username = res.fetchone()[1]
         assert username == "testuser2"
 
-    def test_enterfile(self, gpx_path, db):
-        cursor = db.cursor
-        extracted_pts = gpx2spatialite.extractpoints(gpx_path, skip_wpts=True)
+    def test_enterfile(self, gpx_path, database):
+        cursor = database.cursor
+        extracted_pts = gpx.extractpoints(gpx_path, skip_wpts=True)
 
-        gpx2spatialite.enterfile(gpx_path, cursor, 1,
-                                 extracted_pts[2],
-                                 extracted_pts[3])
+        db.enterfile(gpx_path, cursor, 1, extracted_pts[2], extracted_pts[3])
 
         sql = "select * from files"
         res = cursor.execute(sql)
@@ -31,9 +32,9 @@ class TestDb:
 
         assert test_file_row[1] == os.path.basename(gpx_path)
 
-    def get_file_and_user(self, gpx_path, db):
-        cursor = db.cursor
-        md5 = gpx2spatialite.getmd5(os.path.expanduser(gpx_path))
+    def get_file_and_user(self, gpx_path, database):
+        cursor = database.cursor
+        md5 = helper.getmd5(os.path.expanduser(gpx_path))
 
         sql = "select * from files where md5hash = '%s'" % md5
         res = cursor.execute(sql)
@@ -41,13 +42,12 @@ class TestDb:
         # print file_row
         return file_row[0], file_row[6]
 
-    def test_entertrackpoints(self, gpx_path, db):
-        cursor = db.cursor
-        extracted_pts = gpx2spatialite.extractpoints(gpx_path)
+    def test_entertrackpoints(self, gpx_path, database):
+        cursor = database.cursor
+        extracted_pts = gpx.extractpoints(gpx_path)
 
-        fileid, userid = self.get_file_and_user(gpx_path, db)
-        gpx2spatialite.enterpoints(cursor, userid, extracted_pts[0],
-                                   fileid, None)
+        fileid, userid = self.get_file_and_user(gpx_path, database)
+        db.enterpoints(cursor, userid, extracted_pts[0], fileid, None)
 
         sql = "select *, astext(geom) from trackpoints"
         res = cursor.execute(sql)
@@ -69,13 +69,12 @@ class TestDb:
         assert trkpt_rows[1][10] is None
         assert trkpt_rows[1][12] == "POINT(13.45717 52.511357)"
 
-    def test_entertracklines(self, gpx_path, db):
-        cursor = db.cursor
-        extracted_pts = gpx2spatialite.extractpoints(gpx_path)
+    def test_entertracklines(self, gpx_path, database):
+        cursor = database.cursor
+        extracted_pts = gpx.extractpoints(gpx_path)
 
-        fileid, userid = self.get_file_and_user(gpx_path, db)
-        gpx2spatialite.enterlines(cursor, userid, extracted_pts[1],
-                                  fileid, None)
+        fileid, userid = self.get_file_and_user(gpx_path, database)
+        db.enterlines(cursor, userid, extracted_pts[1], fileid, None)
 
         sql = "select *, astext(geom) from tracklines"
         res = cursor.execute(sql)
@@ -94,14 +93,13 @@ class TestDb:
         assert trklines_rows[0][8] == 1
         assert trklines_rows[0][9] == 1
 
-    def test_enterwaypoints(self, gpx_path, db):
-        cursor = db.cursor
-        extracted_wpts = gpx2spatialite.extractpoints(gpx_path)
+    def test_enterwaypoints(self, gpx_path, database):
+        cursor = database.cursor
+        extracted_wpts = gpx.extractpoints(gpx_path)
 
-        fileid, userid = self.get_file_and_user(gpx_path, db)
+        fileid, userid = self.get_file_and_user(gpx_path, database)
 
-        gpx2spatialite.enterwaypoints(cursor, userid,
-                                      extracted_wpts[4], fileid)
+        db.enterwaypoints(cursor, userid, extracted_wpts[4], fileid)
 
         sql = "select *, astext(geom) from waypoints"
         res = cursor.execute(sql)
@@ -117,16 +115,16 @@ class TestDb:
         assert wpt_row[7] is None
         assert wpt_row[9] == "POINT(-121.17042 37.085751)"
 
-    def test_check_if_table_exists(self, db):
+    def test_check_if_table_exists(self, database):
         table_exists_func = \
-            partial(gpx2spatialite.check_if_table_exists, db.conn)
+            partial(db_helper.check_if_table_exists, database.conn)
 
         assert table_exists_func("users") is True
         assert table_exists_func("users-not-existing") is False
 
-    def test_get_cityid_trackpoint_pairs(self, gpx_path, db):
+    def test_get_cityid_trackpoint_pairs(self, gpx_path, database):
         loc_trks_func = \
-            partial(gpx2spatialite.get_cityid_trackpoint_pairs, db.cursor)
+            partial(db.get_cityid_trackpoint_pairs, database.cursor)
 
         assert len(loc_trks_func(False)) == 4
         assert len(loc_trks_func(True)) == 0

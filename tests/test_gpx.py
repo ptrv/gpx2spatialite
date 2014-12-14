@@ -1,12 +1,12 @@
 import pytest
 from datetime import datetime
-import gpx2spatialite
+from gpx2spatialite import gpx
 
 
 @pytest.mark.usefixtures("gpx_path")
 class TestGpx:
     def test_extractpoints(self, gpx_path):
-        extracted_points = gpx2spatialite.extractpoints(gpx_path)
+        extracted_points = gpx.extractpoints(gpx_path)
         assert len(extracted_points) == 6
 
         expected_starttime = datetime.strptime('2012-03-17T12:46:19Z',

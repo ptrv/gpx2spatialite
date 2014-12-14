@@ -30,7 +30,7 @@ except ImportError:
     print('*' * 48)
     sys.exit(2)
 import uuid
-from .helper import get_course
+from . import helper
 
 
 def get_gpx_file(file_path):
@@ -103,7 +103,7 @@ def extractpoints(filepath, get_loc_func=None, skip_wpts=False):
                     if lastpoint:
                         lon1 = lastpoint.longitude
                         lat1 = lastpoint.latitude
-                        course = get_course(lat1, lon1, lat, lon)
+                        course = helper.get_course(lat1, lon1, lat, lon)
                         if not speed:
                             speed = point.speed_between(lastpoint)
                             if speed is None:

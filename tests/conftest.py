@@ -4,7 +4,7 @@ import tempfile
 from subprocess import call
 from datetime import timedelta
 import time
-import gpx2spatialite
+from gpx2spatialite import db_helper, spatialite_finder
 
 
 @pytest.fixture(scope='module')
@@ -49,7 +49,7 @@ def dummy_files(request):
             'tmp2': tmp2.name, 'tmp3': tmp3.name}
 
 
-class Db:
+class Database:
     def __init__(self):
         self.db_path = os.path.abspath("tests/data/db.sqlite")
         if (os.path.isfile(self.db_path)
@@ -59,9 +59,9 @@ class Db:
             call(['rm', self.db_path])
 
         if not os.path.isfile(self.db_path):
-            gpx2spatialite.create_new_db(self.db_path)
+            db_helper.create_new_db(self.db_path)
 
-        self.conn = gpx2spatialite.get_connection(self.db_path)
+        self.conn = spatialite_finder.get_connection(self.db_path)
         self.cursor = self.conn.cursor()
 
         sql = "INSERT INTO citydefs ('city', 'country', 'geom') VALUES"
@@ -88,7 +88,7 @@ class Db:
 
 
 @pytest.fixture(scope='module')
-def db(request):
-    db = Db()
+def database(request):
+    db = Database()
     request.addfinalizer(db.cleanup)
     return db
