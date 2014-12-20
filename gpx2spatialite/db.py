@@ -18,10 +18,11 @@
 
 import sys
 import os.path
+import re
 from datetime import datetime
 from functools import partial
-from .spatialite_finder import spatialite
-from .helper import getmd5
+from . import spatialite_finder as spatialite
+from . import helper
 
 
 def enterfile(filepath, cursor, user, firsttimestamp, lasttimestamp):
@@ -30,7 +31,7 @@ def enterfile(filepath, cursor, user, firsttimestamp, lasttimestamp):
     """
     # define fields required for file insert
     filename = os.path.split(filepath)[1]
-    md5hash = getmd5(filepath)
+    md5hash = helper.getmd5(filepath)
     date_entered = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # build sql
@@ -230,7 +231,8 @@ def check_if_gpxfile_exists(cursor, filepath):
     """
     Checks if file is already in database.
     """
-    sql = "SELECT * FROM files WHERE md5hash = '{0}'".format(getmd5(filepath))
+    sql = "SELECT * FROM files WHERE md5hash = '{0}'".format(
+        helper.getmd5(filepath))
 
     cursor.execute(sql)
 
@@ -312,3 +314,45 @@ def get_cityid_trackpoint_pairs(cursor, unknown_only):
     locations_list = results.fetchall()
 
     return locations_list
+
+
+def export_citydefs(cursor, out_file):
+    """
+    Export citydefs from database to a sql insert script.
+    """
+    sql = "SELECT citydef_uid, city, country, AsText(geom) "
+    sql += "FROM citydefs ORDER BY country, city"
+    cursor.execute(sql)
+
+    out_file.write("BEGIN TRANSACTION;\n")
+    rows = cursor.fetchall()
+    for row in rows:
+        line = "INSERT INTO citydefs ('city', 'country', 'geom') VALUES"
+        line += "(\"%s\", \"%s\", "\
+                "GeomFromText('%s', 4326));\n" % (row[1].encode('utf-8'),
+                                                  row[2].encode('utf-8'),
+                                                  row[3].encode('utf-8'))
+        out_file.write(line)
+    out_file.write("COMMIT;\n")
+
+    return len(rows)
+
+
+def import_citydefs(cursor, sql_file):
+    """
+    Import citydefs from a sql insert script.
+    """
+    sql_str = sql_file.read()
+    sql_stmts = sql_str.split(';')
+
+    num_inserted = 0
+    num_failed = 0
+    for stmt in sql_stmts:
+        if re.search(r"INSERT INTO", stmt):
+            try:
+                cursor.execute(stmt + ';')
+                num_inserted += 1
+            except spatialite.IntegrityError:
+                num_failed += 1
+
+    return num_inserted, num_failed

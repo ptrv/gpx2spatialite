@@ -14,12 +14,12 @@
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
 
 
-from .spatialite_finder import spatialite, get_connection
-from .__init__ import get_data
+from . import spatialite_finder as spatialite
+from . import get_data
 
 
 def create_new_db(db_path):
-    connection = get_connection(db_path)
+    connection = spatialite.get_connection(db_path)
     create_db_script = get_data("sql/create_db.sql")
 
     init_spatial_metadata(connection)

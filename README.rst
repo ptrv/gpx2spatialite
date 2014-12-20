@@ -53,27 +53,25 @@ considerably.
 Dependencies
 ------------
 
-Python:
+Linux and Mac
+^^^^^^^^^^^^^
 
-* gpxpy
-* pyspatialite, pysqlite2 (with support for loading extensions)
+* Python:
 
-Linux and Mac:
+  * gpxpy
+  * pyspatialite, pysqlite2 (with support for loading extensions)
 
-* libspatialite
-* libsqlite
+* Other libraries:
 
-Windows:
-
-Here are some instructions for installing libspatialite on Windows:
-
-<https://www.gaia-gis.it/spatialite-2.3.1/install-windows.html>
-
-The spatialite version 2.3.1 is a outdated and not tested
+  * libspatialite
+  * libsqlite
 
 
 Installation
 ------------
+
+Linux and Mac
+^^^^^^^^^^^^^
 
 gpx2spatialite is available via pip.
 You can simply run::
@@ -90,28 +88,43 @@ Otherwise the gpx2spatialite executable will not be found when you run it from t
   PATH=$PATH:$HOME/.local/bin
 
 
+Windows
+^^^^^^^
+
+* Download python 2.7 32bit for windows
+* Install pip. (See instructions `here <https://pip.pypa.io/en/latest/installing.html>`_)
+* Install gpxpy with ``pip install gpxpy``
+* Download mod_spatialte from `here <http://www.gaia-gis.it/gaia-sins/windows-bin-x86/>`_
+  and extract all dlls to ``C:\Python27\Scripts``
+* Download sqlite3.dll from `sqlite website <http://www.sqlite.org/download.html>`_
+  (something like 'sqlite-dll-win32-x86-3080704.zip')
+  and overwrite ``sqlite3.dll`` in ``C:\Python27\Scripts\DLLs`` with the downloaded version
+  (This ensures that ``sqlite3.dll`` is capable of loading extensions)
+* Install gpx2spatialite with ``pip install gpx2spatialite``
+
+
 Usage
 -----
 
 It is possible to read in single files::
 
-  gpx2spatialite -d <path/to/database> -u <user_id> <path/to/gpx>
+  gpx2spatialite import -d <path/to/database> -u <user_id> <path/to/gpx>
 
 Or multiple folders::
 
-  gpx2spatialite -d <path/to/database> -u <user_id> <path/to/folder1> <path/to/folder2>
+  gpx2spatialite import -d <path/to/database> -u <user_id> <path/to/folder1> <path/to/folder2>
 
 Files and folders can be specified both at the same time::
 
-  gpx2spatialite -d <path/to/database> -u <user_id> <path/to/folder1> <path/to/gpx>
+  gpx2spatialite import -d <path/to/database> -u <user_id> <path/to/folder1> <path/to/gpx>
 
 
 Create a new database
 ---------------------
 
-Run script to create a new database and initialize it::
+Run script with subcommand to create a new database and initialize it::
 
-  gpx2spatialite_create_db <path/to/new/database>
+  gpx2spatialite create_db <path/to/new/database>
 
 
 CityDefs
@@ -123,29 +136,29 @@ Each trackpoint has a location assigned to it which is used for the
 These are defined at import time unless the option `-s` or
 `--skip-locations` is passed.
 
-Locations are defined in the `citydefs` table in the database,
-created and populated automatically by 'gpx2spatialite_create_db'.
+Locations are defined in the `citydefs` table in the database, created
+and populated automatically by running 'gpx2spatialite create_db'.
 
 Import citydefs into existing database::
 
-  gpx2spatialite_citydefs -i <path/to/input.sql> <path/to/database>
+  gpx2spatialite citydefs -i <path/to/input.sql> <path/to/database>
 
 Export citydefs table::
 
-  gpx2spatialite_citydefs -e <path/to/output.sql> <path/to/database>
+  gpx2spatialite citydefs -e <path/to/output.sql> <path/to/database>
 
 After adding new locations to the citydefs table, you can look for
 currently unknown trackpoints and assign them to any relevant,
 newly defined locations with::
 
-  gpx2spatialite_updatelocs <path/to/database>
+  gpx2spatialite update_locs <path/to/database>
 
 If you have redefined currently assigned locations or completely
 changed the citydefs table, you will want to redefine every
 trackpoint in the database, for which you use the `-a` or
 `-all-locations` option to the above script::
 
-  gpx2spatialite_updatelocs -a <path/to/database>
+  gpx2spatialite update_locs -a <path/to/database>
 
 
 Unit tests

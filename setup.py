@@ -1,7 +1,4 @@
-try:
-    from setuptools import setup, Command
-except ImportError:
-    from distutils.core import setup, Command
+from setuptools import setup, Command
 
 from gpx2spatialite import __version__
 
@@ -44,10 +41,11 @@ setup(description='gpx2spatialite',
       version=__version__,
       install_requires=['gpxpy'],
       packages=['gpx2spatialite'],
-      scripts=['bin/gpx2spatialite',
-               'bin/gpx2spatialite_citydefs',
-               'bin/gpx2spatialite_create_db',
-               'bin/gpx2spatialite_updatelocs'],
+      entry_points={
+          'console_scripts': [
+              'gpx2spatialite = gpx2spatialite.main:main'
+          ]
+      },
       name='gpx2spatialite',
       cmdclass={'test': PyTest},
       include_package_data=True,
