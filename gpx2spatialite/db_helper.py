@@ -14,12 +14,12 @@
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
 
 
-from . import spatialite_finder as spatialite
+from . import spatialite_finder
 from . import get_data
 
 
 def create_new_db(db_path):
-    connection = spatialite.get_connection(db_path)
+    connection = spatialite_finder.get_connection(db_path)
     create_db_script = get_data("sql/create_db.sql")
 
     init_spatial_metadata(connection)
@@ -30,7 +30,7 @@ def create_new_db(db_path):
             try:
                 with connection:
                     connection.executescript(create_db_query)
-            except spatialite.Error as err:
+            except spatialite_finder.spatialite.Error as err:
                 print('SQL Error: ' + str(err))
     except IOError as err:
         print(err)
@@ -51,7 +51,7 @@ def init_spatial_metadata(connection):
     try:
         with connection:
             connection.execute(query)
-    except spatialite.Error as err:
+    except spatialite_finder.spatialite.Error as err:
         print('SQL Error: ' + str(err))
 
 

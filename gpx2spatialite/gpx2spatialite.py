@@ -22,7 +22,7 @@ import sys
 import os.path
 import argparse
 from datetime import datetime
-from . import spatialite_finder as spatialite
+from . import spatialite_finder
 from . import db
 from . import db_helper
 from . import gpx
@@ -39,7 +39,7 @@ def create_db(args_dict):
 
     db_helper.create_new_db(new_db)
 
-    conn = spatialite.get_connection(new_db)
+    conn = spatialite_finder.get_connection(new_db)
 
     def print_file_not_exists(file_name):
         print("'{0}' does not exist".format(file_name))
@@ -56,7 +56,7 @@ def create_db(args_dict):
                 try:
                     with conn:
                         conn.executescript(insert_citydefs_query)
-                except spatialite.Error as err:
+                except spatialite_finder.spatialite.Error as err:
                     print("SQL Error: " + str(err))
         except IOError:
             print_file_not_exists(insert_citydefs_script)
@@ -68,7 +68,7 @@ def create_db(args_dict):
                 try:
                     with conn:
                         conn.executescript(custom_script)
-                except spatialite.Error as err:
+                except spatialite_finder.spatialite.Error as err:
                     print("SQL Error: " + str(err))
         except IOError:
             print_file_not_exists(exec_script)
@@ -85,7 +85,7 @@ def citydefs(args_dict):
 
     cmdline.set_print_verbose(not quiet)
 
-    conn = spatialite.get_connection(dbpath)
+    conn = spatialite_finder.get_connection(dbpath)
     cursor = conn.cursor()
 
     if export_file:
@@ -120,7 +120,7 @@ def update_locs(args_dict):
     # -------------------------------------------------------------------------
     starttime = datetime.now()
     # -------------------------------------------------------------------------
-    conn = spatialite.get_connection(dbpath)
+    conn = spatialite_finder.get_connection(dbpath)
     cursor = conn.cursor()
 
     # -------------------------------------------------------------------------
@@ -187,7 +187,7 @@ def importer(args_dict):
 
     cmdline.set_print_verbose(not quiet)
 
-    conn = spatialite.get_connection(dbpath)
+    conn = spatialite_finder.get_connection(dbpath)
     cursor = conn.cursor()
 
     # -------------------------------------------------------------------------
@@ -204,7 +204,7 @@ def importer(args_dict):
 
     if not db_helper.check_if_table_exists(conn, "users"):
         msg = ("Unable to find database table \"users\".\n Use "
-               "`gpx2spatialite_create_db` to create the database beforehand.")
+               "`gpx2spatialite create_db` to create the database beforehand.")
         print(msg)
         cursor.close()
         conn.close()

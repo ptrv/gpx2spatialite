@@ -21,7 +21,7 @@ import os.path
 import re
 from datetime import datetime
 from functools import partial
-from . import spatialite_finder as spatialite
+from . import spatialite_finder
 from . import helper
 
 
@@ -46,7 +46,7 @@ def enterfile(filepath, cursor, user, firsttimestamp, lasttimestamp):
     # entered
     try:
         cursor.execute(sql)
-    except spatialite.IntegrityError as err:
+    except spatialite_finder.spatialite.IntegrityError as err:
         print("*" * 43)
         print("File already entered. Please try again")
         print(err)
@@ -136,7 +136,7 @@ def enterpoints(cursor, user, trkpts, file_uid, segments_dict):
 
         try:
             cursor.execute(sql)
-        except spatialite.IntegrityError as err:
+        except spatialite_finder.spatialite.IntegrityError as err:
             msg = "Not importing duplicate point from {0}: {1}"
             print(msg.format(time, err))
 
@@ -352,7 +352,7 @@ def import_citydefs(cursor, sql_file):
             try:
                 cursor.execute(stmt + ';')
                 num_inserted += 1
-            except spatialite.IntegrityError:
+            except spatialite_finder.spatialite.IntegrityError:
                 num_failed += 1
 
     return num_inserted, num_failed
