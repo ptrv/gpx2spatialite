@@ -35,7 +35,8 @@ if not LOAD_AS_EXTENSION:
     try:
         from pyspatialite import dbapi2 as spatialite
     except ImportError:
-        print("Please install pyspatialite")
+        print("Please install a sqlite3 library that supports loading \
+        extensions or pyspatialite")
         sys.exit(2)
 
 
