@@ -94,7 +94,7 @@ Windows
 * Download python 2.7 32bit for windows
 * Install pip. (See instructions `here <https://pip.pypa.io/en/latest/installing.html>`_)
 * Install gpxpy with ``pip install gpxpy``
-* Download mod_spatialte from `here <http://www.gaia-gis.it/gaia-sins/windows-bin-x86/>`_
+* Download mod_spatialte from http://www.gaia-gis.it/gaia-sins/windows-bin-x86/
   and extract all dlls to ``C:\Python27\Scripts``
 * Download sqlite3.dll from `sqlite website <http://www.sqlite.org/download.html>`_
   (something like 'sqlite-dll-win32-x86-3080704.zip')
