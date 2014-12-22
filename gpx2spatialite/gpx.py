@@ -18,7 +18,6 @@
 import sys
 try:
     import gpxpy
-    import gpxpy.gpx
 except ImportError:
     print('*' * 48)
     print('This script needs the python module gpxpy to work')
@@ -38,8 +37,8 @@ def get_gpx_file(file_path):
     try:
         with open(file_path) as gpx_file:
             try:
-                gpx = gpxpy.parse(gpx_file)
-                return gpx
+                gpx_obj = gpxpy.parse(gpx_file)
+                return gpx_obj
             except Exception as e:
                 msg = "GPXException ({0}) for {1}: {2}."
                 print(msg.format(type(e), file_path, e))
@@ -70,13 +69,13 @@ def extractpoints(filepath, get_loc_func=None, skip_wpts=False):
     wpts = []
     segs = []
 
-    gpx = get_gpx_file(filepath)
-    if gpx is None:
+    gpx_obj = get_gpx_file(filepath)
+    if gpx_obj is None:
         return trkpts, trklines, 0, 0, wpts, segs
 
-    firsttimestamp, lasttimestamp = gpx.get_time_bounds()
+    firsttimestamp, lasttimestamp = gpx_obj.get_time_bounds()
 
-    for track in gpx.tracks:
+    for track in gpx_obj.tracks:
         for segment in track.segments:
             if segment.get_points_no() > 1:
                 seg_uuid = uuid.uuid4()
@@ -143,7 +142,7 @@ def extractpoints(filepath, get_loc_func=None, skip_wpts=False):
                 print("skipping segment with < 2 points")
 
     if not skip_wpts:
-        for wpt in gpx.waypoints:
+        for wpt in gpx_obj.waypoints:
             wptline = []
             wpt_lat = wpt.latitude
             wpt_lon = wpt.longitude
