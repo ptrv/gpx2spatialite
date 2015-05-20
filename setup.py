@@ -43,7 +43,7 @@ setup(description='gpx2spatialite',
       packages=['gpx2spatialite'],
       entry_points={
           'console_scripts': [
-              'gpx2spatialite = gpx2spatialite.main:main'
+              'gpx2spatialite = gpx2spatialite.gpx2spatialite:main'
           ]
       },
       name='gpx2spatialite',
