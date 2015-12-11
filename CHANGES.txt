@@ -1,3 +1,7 @@
+0.8.1 - 2015-12-11
+------------------
+* Change heuristics to find spatialite libarary
+
 0.8.0 - 2015-05-21
 ------------------
 * Fix script entry point
