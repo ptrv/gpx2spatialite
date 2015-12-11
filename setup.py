@@ -53,6 +53,7 @@ setup(description='gpx2spatialite',
       license='GPLv3',
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+          'Programming Language :: Python :: 2.7',
           'Programming Language :: Python :: 2 :: Only',
           'Topic :: Scientific/Engineering :: GIS'
       ])
