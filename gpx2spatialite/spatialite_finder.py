@@ -16,28 +16,27 @@
 
 import sys
 
-import sqlite3 as spatialite
+LOAD_AS_EXTENSION = False
 
+try:
+    from pyspatialite import dbapi2 as spatialite
+except ImportError:
+    import sqlite3 as spatialite
 
-def check_for_extension():
-    return hasattr(spatialite.Connection, 'enable_load_extension')
+    def check_for_extension():
+        return hasattr(spatialite.Connection, 'enable_load_extension')
 
-LOAD_AS_EXTENSION = check_for_extension()
+    LOAD_AS_EXTENSION = check_for_extension()
 
-if not LOAD_AS_EXTENSION:
-    try:
-        from pysqlite2 import dbapi2 as spatialite
-        LOAD_AS_EXTENSION = check_for_extension()
-    except ImportError:
-        LOAD_AS_EXTENSION = False
-
-if not LOAD_AS_EXTENSION:
-    try:
-        from pyspatialite import dbapi2 as spatialite
-    except ImportError:
-        print("Please install a sqlite3 library that supports loading \
-        extensions or pyspatialite")
-        sys.exit(2)
+    if not LOAD_AS_EXTENSION:
+        try:
+            from pysqlite2 import dbapi2 as spatialite
+            LOAD_AS_EXTENSION = check_for_extension()
+        except ImportError:
+            LOAD_AS_EXTENSION = False
+            print("Please install pyspatialite or a sqlite3 library \
+            that supports loading extensions")
+            sys.exit(2)
 
 
 def get_connection(db_path):
