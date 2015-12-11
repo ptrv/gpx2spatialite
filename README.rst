@@ -7,15 +7,15 @@ gpx2spatialite
 .. image:: https://travis-ci.org/ptrv/gpx2spatialite.svg?branch=master
    :target: https://travis-ci.org/ptrv/gpx2spatialite
 
-.. image:: https://pypip.in/version/gpx2spatialite/badge.svg
+.. image:: https://img.shields.io/pypi/v/gpx2spatialite.svg
    :target: https://pypi.python.org/pypi/gpx2spatialite/
    :alt: Latest Version
 
-.. image:: https://pypip.in/py_versions/gpx2spatialite/badge.svg
+.. image:: https://img.shields.io/pypi/pyversions/gpx2spatialite.svg
    :target: https://pypi.python.org/pypi/gpx2spatialite/
    :alt: Supported Python versions
 
-.. image:: https://pypip.in/license/gpx2spatialite/badge.svg
+.. image:: https://img.shields.io/pypi/l/gpx2spatialite.svg
    :target: https://pypi.python.org/pypi/gpx2spatialite/
    :alt: License
 
