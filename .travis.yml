@@ -12,6 +12,9 @@ install:
   # gpxpy
   - pip install -r requirements.txt
 
+  # pysqlite
+  - pip install pysqlite
+
   # Spatialiate
   - sudo apt-get install -y libproj-dev libgeos-dev libspatialite-dev
   - sudo ln -s /usr/lib/x86_64-linux-gnu/libspatialite.so /usr/lib/libspatialite.so
