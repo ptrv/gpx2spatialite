@@ -56,7 +56,7 @@ def checkadd(username):
     while True:
         question = ('Do you want to add {0} as a new user? y or n '
                     .format(username))
-        answer = raw_input(question)
+        answer = input(question)
         answer = answer.lower()
         if answer in ('y', 'yes'):
             return True
